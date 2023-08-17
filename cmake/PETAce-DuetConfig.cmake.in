@@ -1,0 +1,102 @@
+# Copyright 2023 TikTok Pte. Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+macro(duet_find_dependency dep)
+    find_dependency(${dep})
+    if(NOT ${dep}_FOUND)
+        if(NOT PETAce-Duet_FIND_QUIETLY)
+            message(WARNING "Could not find dependency `${dep}` required by this configuration")
+        endif()
+        set(PETAce-Duet_FOUND FALSE)
+        return()
+    endif()
+endmacro()
+
+set(PETAce-Duet_FOUND FALSE)
+set(PETAce-Duet_STATIC_FOUND FALSE)
+set(PETAce-Duet_SHARED_FOUND FALSE)
+
+set(DUET_VERSION @DUET_VERSION@)
+set(DUET_VERSION_MAJOR @DUET_VERSION_MAJOR@)
+set(DUET_VERSION_MINOR @DUET_VERSION_MINOR@)
+set(DUET_VERSION_PATCH @DUET_VERSION_PATCH@)
+set(DUET_BUILD_TYPE @CMAKE_BUILD_TYPE@)
+
+set(DUET_CARRY_NETWORK @DUET_CARRY_NETWORK@)
+set(DUET_CARRY_SOLO @DUET_CARRY_SOLO@)
+set(DUET_CARRY_VERSE @DUET_CARRY_VERSE@)
+set(DUET_CARRY_EIGEN @DUET_CARRY_EIGEN@)
+
+if(NOT DUET_CARRY_NETWORK)
+    duet_find_dependency(PETAce-Network REQUIRED)
+endif()
+
+if(NOT DUET_CARRY_SOLO)
+    duet_find_dependency(PETAce-Solo REQUIRED)
+endif()
+
+if(NOT DUET_CARRY_VERSE)
+    duet_find_dependency(PETAce-Verse REQUIRED)
+endif()
+
+if(NOT DUET_CARRY_EIGEN)
+    duet_find_dependency(Eigen3 REQUIRED)
+endif()
+
+# Add the current directory to the module search path
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
+
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+duet_find_dependency(Threads)
+
+include(${CMAKE_CURRENT_LIST_DIR}/PETAce-DuetTargets.cmake)
+
+if(TARGET PETAce-Duet::duet)
+    set(PETAce-Duet_FOUND TRUE)
+    set(PETAce-Duet_STATIC_FOUND TRUE)
+endif()
+
+if(TARGET PETAce-Duet::duet_shared)
+    set(PETAce-Duet_FOUND TRUE)
+    set(PETAce-Duet_SHARED_FOUND TRUE)
+endif()
+
+if(PETAce-Duet_FOUND)
+    if(NOT PETAce-Duet_FIND_QUIETLY)
+        message(STATUS "PETAce-Duet -> Version ${PETAce-Duet_VERSION} detected")
+    endif()
+    if(DUET_DEBUG AND NOT PETAce-Duet_FIND_QUIETLY)
+        message(STATUS "Performance warning: PETAce-Duet compiled in debug mode")
+    endif()
+    set(PETAce-Duet_TARGETS_AVAILABLE "PETAce-Duet -> Targets available:")
+
+    if(PETAce-Duet_STATIC_FOUND)
+        string(APPEND PETAce-Duet_TARGETS_AVAILABLE " PETAce-Duet::duet")
+    endif()
+    if(PETAce-Duet_SHARED_FOUND)
+        string(APPEND PETAce-Duet_TARGETS_AVAILABLE " PETAce-Duet::duet_shared")
+    endif()
+    if(NOT PETAce-Duet_FIND_QUIETLY)
+        message(STATUS ${PETAce-Duet_TARGETS_AVAILABLE})
+    endif()
+else()
+    if(NOT PETAce-Duet_FIND_QUIETLY)
+        message(STATUS "PETAce-Duet -> NOT FOUND")
+    endif()
+endif()
