@@ -34,8 +34,8 @@ public:
         return (first[0] ^ first[1] ^ second[0] ^ second[1]) == 0;
     }
 
-    void st_generator(std::size_t party_id, Permutation& p, PlainMatrix<std::int64_t>& delta,
-            PlainMatrix<std::int64_t>& a, PlainMatrix<std::int64_t>& b) {
+    void st_generator(std::size_t party_id, Permutation& p, Matrix<std::int64_t>& delta, Matrix<std::int64_t>& a,
+            Matrix<std::int64_t>& b) {
         std::size_t rows = 12;
         std::size_t cols = 3;
         petace::network::NetParams net_params;
@@ -170,8 +170,8 @@ TEST_F(ShuffleTest, secert_shared_shuffle_arith_test) {
     EXPECT_EQ(all_choice[0].size(), 4);
 
     std::vector<std::vector<std::vector<GGMTreeNode>>> all_levels_sums;
-    PlainMatrix<std::int64_t> a;
-    PlainMatrix<std::int64_t> b;
+    Matrix<std::int64_t> a;
+    Matrix<std::int64_t> b;
     test.passive_phase_1<std::int64_t>(cols, all_levels_sums, a, b);
 
     // mock_ot
@@ -186,25 +186,25 @@ TEST_F(ShuffleTest, secert_shared_shuffle_arith_test) {
         }
     }
 
-    PlainMatrix<std::int64_t> delta;
+    Matrix<std::int64_t> delta;
     test.active_phase_2<std::int64_t>(cols, p, all_need_levels_sums, delta);
 
-    PlainMatrix<std::int64_t> pa = p.permute(a);
+    Matrix<std::int64_t> pa = p.permute(a);
     EXPECT_EQ(pa - b, delta);
 
     // test for secert shared shuffle;
-    PlainMatrix<std::int64_t> x;
+    Matrix<std::int64_t> x;
     x.resize(rows, cols);
     for (std::size_t i = 0; i < matrix_size; ++i) {
         x(i) = i;
     }
     SecretSharedShuffle ss_shuffle_test;
-    PlainMatrix<std::int64_t> x_sub_a;
+    Matrix<std::int64_t> x_sub_a;
     ss_shuffle_test.passive_phase_1(x, a, x_sub_a);
-    PlainMatrix<std::int64_t> active_share;
-    PlainMatrix<std::int64_t> passive_share = b;
+    Matrix<std::int64_t> active_share;
+    Matrix<std::int64_t> passive_share = b;
     ss_shuffle_test.active_phase_1(p, x_sub_a, delta, active_share);
-    PlainMatrix<std::int64_t> px = p.permute(x);
+    Matrix<std::int64_t> px = p.permute(x);
     EXPECT_EQ(px, active_share + passive_share);
 }
 
@@ -220,8 +220,8 @@ TEST_F(ShuffleTest, secert_shared_shuffle_bool_test) {
     EXPECT_EQ(all_choice[0].size(), 4);
 
     std::vector<std::vector<std::vector<GGMTreeNode>>> all_levels_sums;
-    PlainMatrix<std::int64_t> a;
-    PlainMatrix<std::int64_t> b;
+    Matrix<std::int64_t> a;
+    Matrix<std::int64_t> b;
     test.passive_phase_1<std::int64_t>(cols, all_levels_sums, a, b, true);
 
     // mock_ot
@@ -236,12 +236,12 @@ TEST_F(ShuffleTest, secert_shared_shuffle_bool_test) {
         }
     }
 
-    PlainMatrix<std::int64_t> delta;
+    Matrix<std::int64_t> delta;
     test.active_phase_2<std::int64_t>(cols, p, all_need_levels_sums, delta, true);
 
-    PlainMatrix<std::int64_t> pa = p.permute(a);
+    Matrix<std::int64_t> pa = p.permute(a);
 
-    PlainMatrix<std::int64_t> pa_xor_b;
+    Matrix<std::int64_t> pa_xor_b;
     pa_xor_b.resize(rows, cols);
     for (std::size_t i = 0; i < rows; ++i) {
         for (std::size_t j = 0; j < cols; ++j) {
@@ -257,9 +257,9 @@ TEST_F(ShuffleTest, secert_shared_shuffle_bool_test) {
 TEST_F(ShuffleTest, st_generator_test) {
     std::vector<std::thread> threads;
     Permutation p(12);
-    PlainMatrix<std::int64_t> delta;
-    PlainMatrix<std::int64_t> a;
-    PlainMatrix<std::int64_t> b;
+    Matrix<std::int64_t> delta;
+    Matrix<std::int64_t> a;
+    Matrix<std::int64_t> b;
 
     for (std::size_t i = 0; i < 2; ++i) {
         threads.emplace_back([&, i]() { st_generator(i, p, delta, a, b); });
@@ -267,7 +267,7 @@ TEST_F(ShuffleTest, st_generator_test) {
     for (auto& thread : threads) {
         thread.join();
     }
-    PlainMatrix<std::int64_t> pa = p.permute(a);
+    Matrix<std::int64_t> pa = p.permute(a);
     EXPECT_EQ(pa - b, delta);
 }
 

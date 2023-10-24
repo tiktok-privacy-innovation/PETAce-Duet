@@ -14,8 +14,8 @@
 
 FetchContent_Declare(
     verse
-    GIT_REPOSITORY git@github.com:tiktok-privacy-innovation/PETAce-Verse.git
-    GIT_TAG        2e71d761d3808abf7b1caf7a63e3a6318f9265b4 # v0.1.0
+    GIT_REPOSITORY https://github.com/tiktok-privacy-innovation/PETAce-Verse.git
+    GIT_TAG        f79ede7af704293de32aa44be8c967e1d0eaa3dc # 0.2.0
 )
 FetchContent_GetProperties(verse)
 

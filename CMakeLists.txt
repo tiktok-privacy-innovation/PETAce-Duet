@@ -31,7 +31,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "Build type (CMAKE_BUILD_TYPE): ${CMAKE_BUILD_TYPE}")
 
-project(DUET VERSION 0.1.0 LANGUAGES CXX C)
+project(DUET VERSION 0.2.0 LANGUAGES CXX C)
 
 ########################
 # Global configuration #
@@ -194,7 +194,7 @@ if(NOT TARGET Threads::Threads)
 endif()
 
 # PETAce-Network::network
-find_package(PETAce-Network 0.1 QUIET CONFIG)
+find_package(PETAce-Network 0.2 QUIET CONFIG)
 if(PETAce-Network_FOUND)
     message(STATUS "PETAce-Network: found")
     if(PETAce-Network_STATIC_FOUND)
@@ -218,7 +218,7 @@ else()
 endif()
 
 # PETAce-Solo::solo
-find_package(PETAce-Solo 0.1 QUIET CONFIG)
+find_package(PETAce-Solo 0.2 QUIET CONFIG)
 if(PETAce-Solo_FOUND)
     message(STATUS "PETAce-Solo: found")
     if(PETAce-Solo_STATIC_FOUND)
@@ -242,7 +242,7 @@ else()
 endif()
 
 # PETAce-Verse::verse
-find_package(PETAce-Verse 0.1 QUIET CONFIG)
+find_package(PETAce-Verse 0.2 QUIET CONFIG)
 if(PETAce-Verse_FOUND)
     message(STATUS "PETAce-Verse: found")
     if(PETAce-Verse_STATIC_FOUND)
@@ -266,6 +266,7 @@ else()
 endif()
 
 # eigen
+set(DUET_BUILD_EIGEN FALSE CACHE BOOL "" FORCE)
 if(NOT TARGET Eigen3::Eigen)
     find_package(Eigen3 3.4.0 QUIET CONFIG)
     if(Eigen3_FOUND)
@@ -526,4 +527,18 @@ message(STATUS "DUET_BUILD_BENCH: ${DUET_BUILD_BENCH}")
 
 if(DUET_BUILD_BENCH)
     add_subdirectory(bench)
+endif()
+
+##################
+# DUET python #
+##################
+
+# [OPTION] DUET_BUILD_PYTHON (DEFAULT: OFF)
+# Build a shared library if set to ON.
+set(DUET_BUILD_PYTHON_STR "Build python shared library")
+option(DUET_BUILD_PYTHON ${DUET_BUILD_PYTHON_STR} OFF)
+message(STATUS "DUET_BUILD_PYTHON: ${DUET_BUILD_PYTHON}")
+
+if(DUET_BUILD_PYTHON)
+    add_subdirectory(python)
 endif()

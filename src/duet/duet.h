@@ -18,9 +18,11 @@
 
 #include "duet/beaver/arithmetic_triplet.h"
 #include "duet/beaver/boolean_triplet.h"
+#include "duet/paillier_engine/paillier_engine.h"
 #include "duet/st_generator/st_generator.h"
 #include "duet/util/defines.h"
 #include "duet/util/io.h"
+#include "duet/util/matrix.h"
 #include "duet/util/prng.h"
 
 namespace petace {
@@ -47,60 +49,64 @@ public:
     ~Duet() = default;
 
     /**
-     * @brief Secret share a plain matrix to both parties, where the plaintext contains double values.
+     * @brief Secret share a private matrix to both parties, where the private matrix contains double values.
      *
-     * One party provides a plain matrix, and the output is that each of both parties holds
+     * One party provides a private matrix, and the output is that each of both parties holds
      * additive share of the matrix.
      *
      * @param[in] net The network interface (e.g., PETAce-Network interface).
-     * @param[in] party The party id of the plain matrix provider.
-     * @param[in] in The input plain matrix. (non-sender party should provide an empty matrix)
+     * @param[in] in The input private matrix. (non-sender party should provide an empty matrix)
      * @param[out] out The output additive share matrix.
      * @throws std::invalid_argument if in.size() == 0.
      */
-    void share(const std::shared_ptr<network::Network>& net, std::size_t party, const PlainMatrix<double>& in,
-            ArithMatrix& out);
+    void share(const std::shared_ptr<network::Network>& net, const PrivateMatrix<double>& in, ArithMatrix& out);
 
     /**
-     * @brief Secret share a plain matrix to both parties, where the plaintext contains int64_t values.
+     * @brief Secret share a private matrix to both parties, where the private matrix contains int64_t values.
      *
-     * One party provides a plain matrix, and the output is that each of both parties holds
+     * One party provides a private matrix, and the output is that each of both parties holds
      * additive share of the matrix.
      *
      * @param[in] net The network interface (e.g., PETAce-Network interface).
-     * @param[in] party The party id of the plain matrix provider.
-     * @param[in] in The input plain matrix. (non-sender party should provide an empty matrix)
+     * @param[in] in The input private matrix. (non-sender party should provide an empty matrix)
      * @param[out] out The output additive share matrix.
      * @throws std::invalid_argument if in.size() == 0.
      */
-    void share(const std::shared_ptr<network::Network>& net, std::size_t party, const PlainMatrix<std::int64_t>& in,
-            ArithMatrix& out);
+    void share(const std::shared_ptr<network::Network>& net, const PrivateMatrixBool& in, ArithMatrix& out);
 
     /**
-     * @brief Reconstruct additive-secret-shared matrix to reveal the plain matrix.
+     * @brief Reconstruct additive-secret-shared matrix to reveal the private matrix.
      *
      * @param[in] net The network interface (e.g., PETAce-Network interface).
-     * @param[in] party The party id of the plain matrix receiver.
+     * @param[in] party_id The party id of the private matrix receiver.
      * @param[in] in The input secret shared matrix.
-     * @param[out] out The output plain matrix. (non-receiver party should provide an empty matrix)
+     * @param[out] out The output private matrix. (non-receiver party should provide an empty matrix)
      * @throws std::invalid_argument if in.size() == 0.
      */
-    void reveal(const std::shared_ptr<network::Network>& net, std::size_t party, const ArithMatrix& in,
-            PlainMatrix<double>& out);
+    void reveal(const std::shared_ptr<network::Network>& net, const ArithMatrix& in, PrivateMatrix<double>& out);
 
     /**
-     * @brief Reconstruct boolean-secret-shared matrix to reveal the plain matrix.
-     *
-     * xor of two secret shared boolean values reveals the plain boolean value.
+     * @brief Reconstruct additive-secret-shared matrix to reveal the public matrix.
      *
      * @param[in] net The network interface (e.g., PETAce-Network interface).
-     * @param[in] party The party id of the plain matrix receiver.
      * @param[in] in The input secret shared matrix.
-     * @param[out] out The output plain matrix. (non-receiver party should provide an empty matrix)
+     * @param[out] out The output public matrix.
      * @throws std::invalid_argument if in.size() == 0.
      */
-    void reveal_bool(const std::shared_ptr<network::Network>& net, std::size_t party, const BoolMatrix& in,
-            PlainMatrix<std::int64_t>& out);
+    void reveal(const std::shared_ptr<network::Network>& net, const ArithMatrix& in, PublicMatrix<double>& out);
+
+    /**
+     * @brief Reconstruct boolean-secret-shared matrix to reveal the private matrix.
+     *
+     * xor of two secret shared boolean values reveals the private boolean value.
+     *
+     * @param[in] net The network interface (e.g., PETAce-Network interface).
+     * @param[in] party The party id of the private matrix receiver.
+     * @param[in] in The input secret shared matrix.
+     * @param[out] out The output private matrix. (non-receiver party should provide an empty matrix)
+     * @throws std::invalid_argument if in.size() == 0.
+     */
+    void reveal_bool(const std::shared_ptr<network::Network>& net, const BoolMatrix& in, PrivateMatrixBool& out);
 
     /**
      * @brief Addition of two additively shared matrix
@@ -142,6 +148,19 @@ public:
             const std::shared_ptr<network::Network>& net, const BoolMatrix& x, const BoolMatrix& y, BoolMatrix& z);
 
     /**
+     * @brief OR gate evaluation. Input matrices are a boolean secret shared matrices and a public boolean matrix.
+     *
+     * z = x or y
+     *
+     * @param[in] net The network interface (e.g., PETAce-Network interface).
+     * @param[in] x The first input public boolean matrix
+     * @param[in] y The second input boolean secret-shared matrix
+     * @param[out] z The output boolean matrix storing OR result
+     * @throws std::invalid_argument if x.size() != y.size().
+     */
+    void elementwise_bool_or(const PublicMatrixBool& x, const BoolMatrix& y, BoolMatrix& z);
+
+    /**
      * @brief Multiplication of two arithmetic share matrices.
      *
      * The operation is element-wise, e.g., z[i] = x[i] * y[i]
@@ -154,6 +173,85 @@ public:
      * @throws std::invalid_argument if x.size() != y.size().
      */
     void elementwise_mul(
+            const std::shared_ptr<network::Network>& net, const ArithMatrix& x, const ArithMatrix& y, ArithMatrix& z);
+
+    /**
+     * @brief Multiplication of an arithmetic share matrix and a public matrix.
+     *
+     * The operation is element-wise, e.g., z[i] = x[i] * y[i]
+     * NOTE: this is not matrix multiplication.
+     *
+     * @param[in] net The network interface (e.g., PETAce-Network interface)
+     * @param[in] x The first input public matrix
+     * @param[in] y The second input arithmetic secret-shared matrix
+     * @param[out] z The output of the multiplication result
+     * @throws std::invalid_argument if x.size() != y.size().
+     */
+    void elementwise_mul(const PublicMatrix<double>& x, const ArithMatrix& y, ArithMatrix& z);
+
+    /**
+     * @brief Division between a public double matrix and an arith share matrix.
+     *
+     * The operation is element-wise, e.g., z[i] = x[i] / y[i]
+     *
+     * @param[in] net The network interface (e.g., PETAce-Network interface)
+     * @param[in] x The first input public double matrix
+     * @param[in] y The second input arithmetic secret-shared matrix
+     * @param[in] z The output division result
+     * @throws std::invalid_argument if x.size() != y.size().
+     */
+    void elementwise_share_div_public(const ArithMatrix& x, const PublicMatrix<double>& y, ArithMatrix& z);
+
+    /**
+     * @brief Multiplication of an arithmetic share matrix and a public number.
+     *
+     * The operation is element-wise, e.g., z[i] = x * y[i]
+     * NOTE: this is not matrix multiplication.
+     *
+     * @param[in] net The network interface (e.g., PETAce-Network interface)
+     * @param[in] x The first input public double number
+     * @param[in] y The second input arithmetic secret-shared matrix
+     * @param[out] z The output of the multiplication result
+     * @throws std::invalid_argument if x.size() != y.size().
+     */
+    void scalar_mul(PublicDouble x, const ArithMatrix& y, ArithMatrix& z);
+
+    /**
+     * @brief Subtraction between an arith share matrix and a public double number.
+     *
+     * z = x - y
+     *
+     * @param[in] x The first input additively secret-shared matrix
+     * @param[in] y The second input public double number
+     * @param[out] z The output matrix of the subtraction result
+     * @throws std::invalid_argument if x.size() != y.size().
+     */
+    void share_sub_public_double(const ArithMatrix& x, PublicDouble y, ArithMatrix& z);
+
+    /**
+     * @brief Will be support in next version.
+     */
+    void mat_mul(
+            const std::shared_ptr<network::Network>& net, const ArithMatrix& x, const ArithMatrix& y, ArithMatrix& z);
+
+    /**
+     * @brief Will be support in next version.
+     */
+    void mat_mul(const std::shared_ptr<network::Network>& net, const Matrix<double>& x, const ArithMatrix& y,
+            ArithMatrix& z);
+
+    /**
+     * @brief Division of two arithmetic share matrices.
+     *
+     * The operation is element-wise, e.g., z[i] = x[i] / y[i]
+     *
+     * @param[in] net The network interface (e.g., PETAce-Network interface).
+     * @param[in] x The first input arithmetic secret-shared matrix
+     * @param[in] y The second input arithmetic secret-shared matrix
+     * @param[in] z The output division result
+     * @throws std::invalid_argument if x.size() != y.size().
+     */
+    void elementwise_div(
             const std::shared_ptr<network::Network>& net, const ArithMatrix& x, const ArithMatrix& y, ArithMatrix& z);
 
     /**
@@ -176,17 +274,17 @@ public:
      * @brief Secure comparison.
      *
      * Compute if x > y. results are stored in boolean secret shared matrix z.
-     * y is plaintext matrix.
+     * y is public matrix.
      * ABY version of secure comparison is used.
      * z = (x > y)
      *
      * @param[in] net The network interface (e.g., PETAce-Network interface).
      * @param[in] x The first input arithmetic secret-shared matrix
-     * @param[in] y The second input plaintext secret-shared matrix
+     * @param[in] y The second input public matrix
      * @param[out] z The output boolean share result
      * @throws std::invalid_argument if x.size() != y.size().
      */
-    void greater(const std::shared_ptr<network::Network>& net, const ArithMatrix& x, const PlainMatrix<double>& y,
+    void greater(const std::shared_ptr<network::Network>& net, const ArithMatrix& x, const PublicMatrix<double>& y,
             BoolMatrix& z);
 
     /**
@@ -208,17 +306,17 @@ public:
      * @brief Secure comparison.
      *
      * Compute if x < y. results are stored in boolean secret shared matrix z.
-     * y is plaintext matrix.
+     * y is public matrix.
      * ABY version of secure comparison is used.
      * z = (x < y)
      *
      * @param[in] net The network interface (e.g., PETAce-Network interface).
      * @param[in] x The first input arithmetic secret-shared matrix
-     * @param[in] y The second input plaintext secret-shared matrix
+     * @param[in] y The second input public matrix
      * @param[out] z The output boolean share result
      * @throws std::invalid_argument if x.size() != y.size().
      */
-    void less(const std::shared_ptr<network::Network>& net, const ArithMatrix& x, const PlainMatrix<double>& y,
+    void less(const std::shared_ptr<network::Network>& net, const ArithMatrix& x, const PublicMatrix<double>& y,
             BoolMatrix& z);
 
     /**
@@ -294,17 +392,31 @@ public:
             const std::shared_ptr<network::Network>& net, const BoolMatrix& x, const ArithMatrix& y, ArithMatrix& z);
 
     /**
-     * @brief Secert share based shuffling solution for shuffling a plain matrix(for rows).
+     * @brief Secure select.
      *
-     * One party has a plain matrix, another contributes permutation to shuffling the plain matrix.
+     * Accroding x, set z = x or y;
+     * (e.g., z = (alpha == 0) ? x : y)
      *
      * @param[in] net The network interface (e.g., PETAce-Network interface).
-     * @param[in] party Who has the plain matrix.
-     * @param[in] in The plain matrix.
+     * @param[in] alpha The input the boolean shared matrix.
+     * @param[in] x The input of arithmetic secret-shared matrix.
+     * @param[in] y The input of arithmetic secret-shared matrix.
+     * @param[out] z The output of arithmetic secret-shared matrix
+     * @throws std::invalid_argument if x.size() != y.size().
+     */
+    void multiplexer(const std::shared_ptr<network::Network>& net, const BoolMatrix& alpha, const ArithMatrix& x,
+            const ArithMatrix& y, ArithMatrix& z);
+
+    /**
+     * @brief Secert share based shuffling solution for shuffling a private matrix(for rows).
+     *
+     * One party has a private matrix, another contributes permutation to shuffling the private matrix.
+     *
+     * @param[in] net The network interface (e.g., PETAce-Network interface).
+     * @param[in] in The private matrix.
      * @param[out] out Shuffled matrix.
      */
-    void shuffle(const std::shared_ptr<network::Network>& net, std::size_t party, const PlainMatrix<double>& in,
-            ArithMatrix& out);
+    void shuffle(const std::shared_ptr<network::Network>& net, const PrivateMatrix<double>& in, ArithMatrix& out);
 
     /**
      * @brief Secert share based shuffling solution for shuffling a secret shared matrix(for rows).
@@ -317,14 +429,141 @@ public:
      */
     void shuffle(const std::shared_ptr<network::Network>& net, const ArithMatrix& in, ArithMatrix& out);
 
+    /**
+     * @brief Row major argmax and max interface.
+     *
+     * Return an arith matrix's row major argmax and max.
+     *
+     * @param[in] net The network interface (e.g., PETAce-Network interface).
+     * @param[in] in The arith matrix to compute.
+     * @param[out] max_index The argmax arith share matrix of the input arith matrix.
+     * @param[out] max_value The max arith share matrix of the input arith matrix.
+     */
+    void row_major_argmax_and_max(const std::shared_ptr<network::Network>& net, const ArithMatrix& in,
+            ArithMatrix& max_index, ArithMatrix& max_value);
+
+    /**
+     * @brief Encrypt a private int64_t matrix with Paillier encryption using a party's public key.
+     *
+     * @param[in] input The input private matrix.
+     * @param[out] output The paillier cipher matrix.
+     * @param[in] using_self_pk If using_self_pk == 1, use self's public key, otherwise use the other's public key.
+     * Default to 1.
+     */
+    void encrypt(const PrivateMatrix<std::int64_t>& input, PaillierMatrix& output, size_t using_self_pk = 1);
+
+    /**
+     * @brief Encrypt a private double matrix with Paillier encryption using a party's public key.
+     *
+     * @param[in] input The input private matrix.
+     * @param[out] output The paillier cipher matrix.
+     * @param[in] using_self_pk If using_self_pk == 1, use self's public key, otherwise use the other's public key.
+     * Default to 1.
+     */
+    void encrypt(const PrivateMatrix<double>& input, PaillierMatrix& output, size_t using_self_pk = 1);
+
+    /**
+     * @brief Decrypt a Paillier cipher matrix and recover the plaintext, the plaintext is in the form of int64_t.
+     * Only the party with the private key can decrypt the ciphertext.
+     * NOTE: please make sure the output matrix is initialized with the correct size and party_id.
+     *
+     * @param[in] input The input Paillier matrix.
+     * @param[out] output The decrypted plain matrix.
+     */
+    void decrypt(const PaillierMatrix& input, PrivateMatrix<std::int64_t>& output);
+
+    /**
+     * @brief Decrypt a Paillier cipher matrix and recover the plaintext, the plaintext is in the form of double.
+     * Only the party with the private key can decrypt the ciphertext.
+     * NOTE: please make sure the output matrix is initialized with the correct size and party_id.
+     *
+     * @param[in] input The input Paillier matrix.
+     * @param[out] output The decrypted plain matrix.
+     */
+    void decrypt(const PaillierMatrix& input, PrivateMatrix<double>& output);
+
+    /**
+     * @brief Addition of two Paillier cipher matrices.
+     * x and y should have the same size and party_id.
+     * @param[in] x The first input Paillier matrix.
+     * @param[in] y The second input Paillier matrix.
+     * @param[out] z The output Paillier matrix of the addition result.
+     */
+    void add(const PaillierMatrix& x, const PaillierMatrix& y, PaillierMatrix& z);
+
+    /**
+     * @brief Addition of a Paillier cipher matrix and a Plaintext PrivateMatrix<std::int64_t>.
+     * x and y should have the same size.
+     * @param[in] x The first input PrivateMatrix<std::int64_t> matrix.
+     * @param[in] y The second input Paillier matrix.
+     * @param[out] z The output Paillier matrix of the addition result.
+     */
+    void add(const PrivateMatrix<std::int64_t>& x, const PaillierMatrix& y, PaillierMatrix& z);
+
+    /**
+     * @brief Addition of a Paillier cipher matrix and a Plaintext PrivateMatrix<std::double>.
+     * x and y should have the same size.
+     * @param[in] x The first input PrivateMatrix<std::double> matrix.
+     * @param[in] y The second input Paillier matrix.
+     * @param[out] z The output Paillier matrix of the addition result.
+     */
+    void add(const PrivateMatrix<double>& x, const PaillierMatrix& y, PaillierMatrix& z);
+
+    /**
+     * @brief Multiplication of a Paillier cipher matrix and a Plaintext PrivateMatrix<std::int64_t>.
+     * x and y should have the same size.
+     * We currently only support int64_t matrix as the plaintext.
+     * @param[in] x The first input PrivateMatrix<std::int64_t> matrix.
+     * @param[in] y The second input Paillier matrix.
+     * @param[out] z The output Paillier matrix of the multiplication result.
+     */
+    void mul(const PrivateMatrix<std::int64_t>& x, const PaillierMatrix& y, PaillierMatrix& z);
+
+    /**
+     * @brief Convert a Paillier Matrix to a additive secret shared matrix ArithMatrix.
+     * This function has very specific use case: party i has a Paillier matrix, which is encrypted by party (1 - i)'s
+     * public key. Then we can use h2a to do the conversion. Otherwise, if the Paillier matrix is encrypted by party i's
+     * public key, we should directly decrypt it then use share(). Besides, please make sure that the values in Paillier
+     * cipher is less than 2^64, otherwise the values cannot be represented by int64_t share.
+     *
+     * @param[in] net The network interface (e.g., PETAce-Network interface).
+     * @param[in] in The input Paillier matrix.
+     * @param[in] out The output additive secret share.
+     */
+    void h2a(const std::shared_ptr<network::Network>& net, const PaillierMatrix& in, ArithMatrix& out);
+
+    /**
+     * @brief Convert an additive-shared  ArithMatrix to a Paillier Matrix.
+     * This function has very specific use case: party 0 and party 1 have additvely shared input, then they invoke a2h
+     * to convert it to a Paillier matrix.
+     *
+     * Before running this function, please initialize the out matrix with the party_id.
+     * The cipher will be encrypted with party_id's pk, and the result will be sent to (1 - party_id) .
+     * Otherwise, if you want the cipher to be sent to party_id, this is equivilant to reveal() as party_id can decrypt
+     * it and know the plaintext values.
+     *
+     * @param[in] net The network interface (e.g., PETAce-Network interface).
+     * @param[in] in The input Paillier matrix.
+     * @param[in] out The output additive secret share.
+     */
+    void a2h(const std::shared_ptr<network::Network>& net, const ArithMatrix& in, PaillierMatrix& out);
+
     std::size_t party() {
         return party_id_;
+    }
+
+    const std::shared_ptr<solo::ahepaillier::PublicKey>& get_pk() {
+        return paillier_engine_->get_pk();
+    }
+
+    const std::shared_ptr<solo::ahepaillier::PublicKey>& get_pk_other() {
+        return paillier_engine_->get_pk_other();
     }
 
 private:
     void a2b(const std::shared_ptr<network::Network>& net, const ArithMatrix& x, BoolMatrix& z);
 
-    void millionaire(const std::shared_ptr<network::Network>& net, PlainMatrix<std::int64_t>& x, BoolMatrix& y,
+    void millionaire(const std::shared_ptr<network::Network>& net, Matrix<std::int64_t>& x, BoolMatrix& y,
             std::size_t bit_length = 64);
 
     void kogge_stone_ppa(
@@ -333,11 +572,28 @@ private:
     void pack_and_evaluate_and(
             const std::shared_ptr<network::Network>& net, BoolMatrix& x, BoolMatrix& y, BoolMatrix& z);
 
+    /**
+     * @brief Multiplication of two arithmetic share matrices.
+     *
+     * The operation is element-wise, e.g., z[i] = x[i] * y[i]
+     * NOTE: this is not matrix multiplication.
+     *
+     * @param[in] net The network interface (e.g., PETAce-Network interface).
+     * @param[in] precision The precision of the fixed numbers.
+     * @param[in] x The first input arithmetic secret-shared matrix
+     * @param[in] y The second input arithmetic secret-shared matrix
+     * @param[in] z The output multiplication result
+     * @throws std::invalid_argument if x.size() != y.size().
+     */
+    void elementwise_mul(const std::shared_ptr<network::Network>& net, const PublicMatrix<std::int64_t>& precision,
+            const ArithMatrix& x, const ArithMatrix& y, ArithMatrix& z);
+
     std::shared_ptr<PRNG> rand_generator_ = nullptr;
     std::shared_ptr<BooleanTriplet> rand_bool_triplet_generator_ = nullptr;
     std::shared_ptr<ArithmeticTriplet> rand_arith_triplet_generator_ = nullptr;
     std::shared_ptr<OTGenerator> ot_generator_ = nullptr;
     std::shared_ptr<STGenerator> st_generator_ = nullptr;
+    std::shared_ptr<PaillierEngine> paillier_engine_ = nullptr;
     std::size_t party_id_ = 0;
 };
 

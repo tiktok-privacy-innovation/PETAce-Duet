@@ -14,8 +14,8 @@
 
 FetchContent_Declare(
     network
-    GIT_REPOSITORY git@github.com:tiktok-privacy-innovation/PETAce-Network.git
-    GIT_TAG        096245f85cec4d0065488225bf1b2f1dc979efb2 # v0.1.0
+    GIT_REPOSITORY https://github.com/tiktok-privacy-innovation/PETAce-Network.git
+    GIT_TAG        92d1a6f079cd11e01bc8e610cb92126ede2964b1 # 0.2.0
 )
 FetchContent_GetProperties(network)
 

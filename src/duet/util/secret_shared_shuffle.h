@@ -198,7 +198,7 @@ public:
      */
     template <typename DataType>
     void passive_phase_1(std::size_t cols, std::vector<std::vector<std::vector<GGMTreeNode>>>& all_levels_sums,
-            PlainMatrix<DataType>& a, PlainMatrix<DataType>& b, bool is_boolean_share = false) {
+            Matrix<DataType>& a, Matrix<DataType>& b, bool is_boolean_share = false) {
         std::vector<std::vector<GGMTreeNode>> all_leaves_matrix;
         passive_phase_1(all_levels_sums, all_leaves_matrix);
 
@@ -259,7 +259,7 @@ public:
      */
     template <typename DataType>
     void active_phase_2(std::size_t cols, const Permutation& p,
-            const std::vector<std::vector<GGMTreeNode>>& all_need_levels_sums, PlainMatrix<DataType>& delta,
+            const std::vector<std::vector<GGMTreeNode>>& all_need_levels_sums, Matrix<DataType>& delta,
             bool is_boolean_share = false) {
         std::vector<std::vector<GGMTreeNode>> all_leaves_matrix;
         active_phase_2(p, all_need_levels_sums, all_leaves_matrix);
@@ -329,14 +329,14 @@ public:
     ~SecretSharedShuffle() = default;
 
     template <typename DataType>
-    void passive_phase_1(const PlainMatrix<DataType>& x, const PlainMatrix<DataType>& a, PlainMatrix<DataType>& out) {
+    void passive_phase_1(const Matrix<DataType>& x, const Matrix<DataType>& a, Matrix<DataType>& out) {
         out = x - a;
     }
 
     template <typename DataType>
-    void active_phase_1(const Permutation& p, const PlainMatrix<DataType>& x_sub_a, const PlainMatrix<DataType>& delta,
-            PlainMatrix<DataType>& out) {
-        PlainMatrix<DataType> tmp = p.permute(x_sub_a);
+    void active_phase_1(const Permutation& p, const Matrix<DataType>& x_sub_a, const Matrix<DataType>& delta,
+            Matrix<DataType>& out) {
+        Matrix<DataType> tmp = p.permute(x_sub_a);
         out = tmp + delta;
     }
 

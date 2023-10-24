@@ -14,7 +14,6 @@
 
 #include "duet/ot_generator/ot_generator.h"
 
-#include <iostream>
 #include <stdexcept>
 
 #include "solo/hash.h"
@@ -129,6 +128,45 @@ void OTGenerator::get_correlated_ot(const std::shared_ptr<network::Network>& net
 }
 
 void OTGenerator::get_correlated_ot(const std::shared_ptr<network::Network>& net, const std::size_t ot_size,
+        std::vector<std::int8_t>& choices, std::vector<std::int64_t>& msgs) {
+    choices.resize(ot_size);
+    msgs.resize(ot_size);
+    for (std::size_t i = 0; i < ot_size; i++) {
+        get_random_ot(net, choices[i], msgs[i]);
+    }
+
+    std::vector<std::int64_t> y(ot_size);
+    net->recv_data(y.data(), ot_size * sizeof(std::int64_t));
+
+    for (std::size_t i = 0; i < ot_size; i++) {
+        if (choices[i] != 0) {
+            msgs[i] = y[i] - msgs[i];
+        }
+    }
+
+    return;
+}
+
+void OTGenerator::get_batch_cot(const std::shared_ptr<network::Network>& net, const std::size_t ot_size,
+        const std::vector<std::int64_t>& delta, std::vector<std::vector<std::int64_t>>& msgs) {
+    msgs.resize(ot_size);
+    for (std::size_t i = 0; i < ot_size; i++) {
+        get_random_ot(net, msgs[i]);
+    }
+
+    std::vector<std::int64_t> y(ot_size);
+    for (std::size_t i = 0; i < ot_size; i++) {
+        y[i] = msgs[i][0] + msgs[i][1] + delta[i];
+    }
+
+    for (std::size_t i = 0; i < ot_size; i++) {
+        msgs[i][1] = msgs[i][0] + delta[i];
+    }
+
+    net->send_data(y.data(), ot_size * sizeof(std::int64_t));
+}
+
+void OTGenerator::get_batch_cot(const std::shared_ptr<network::Network>& net, const std::size_t ot_size,
         std::vector<std::int8_t>& choices, std::vector<std::int64_t>& msgs) {
     choices.resize(ot_size);
     msgs.resize(ot_size);

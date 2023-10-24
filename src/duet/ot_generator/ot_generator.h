@@ -31,6 +31,7 @@
 #include "verse/util/common.h"
 #include "verse/verse_factory.h"
 
+#include "duet/util/consts.h"
 #include "duet/util/defines.h"
 #include "duet/util/io.h"
 
@@ -54,8 +55,8 @@ public:
      * @param[in] base_ot_sizes Optional paramater to initialize PETAce-Verse
      * @param[in] ext_ot_sizes Optional paramater to initialize PETAce-Verse
      */
-    OTGenerator(const std::size_t party, const block seed, const std::size_t base_ot_sizes = 128,
-            const std::size_t ext_ot_sizes = 1024);
+    OTGenerator(const std::size_t party, const block seed, const std::size_t base_ot_sizes = kDefaultBaseOtSizes,
+            const std::size_t ext_ot_sizes = kDefaultExtOtSizes);
 
     ~OTGenerator() = default;
 
@@ -183,12 +184,50 @@ public:
         return;
     }
 
-    // sender
+    /**
+     * @brief Random Correlated OT API for the sender.
+     *
+     * @param[in] net The network instance (e.g., from PETAce-Network).
+     * @param[in] ot_size The size of correlated ot.
+     * @param[in] delta The delta value of correlated ot.
+     * @param[in] msgs Messages to send.
+     * @throws std::invalid_argument if length of LabelType > 128 bits.
+     */
     void get_correlated_ot(const std::shared_ptr<network::Network>& net, const std::size_t ot_size,
             const std::int64_t delta, std::vector<std::vector<std::int64_t>>& msgs);
 
-    // receiver
+    /**
+     * @brief Random Correlated OT API for the receiver.
+     *
+     * @param[in] net The network instance (e.g., from PETAce-Network).
+     * @param[in] ot_size The size of correlated ot.
+     * @param[out] choices Choices bits for OT.
+     * @param[out] msgs Messages received according to the choices.
+     */
     void get_correlated_ot(const std::shared_ptr<network::Network>& net, const std::size_t ot_size,
+            std::vector<std::int8_t>& choices, std::vector<std::int64_t>& msgs);
+
+    /**
+     * @brief Random Correlated OT API for the sender.
+     *
+     * @param[in] net The network instance (e.g., from PETAce-Network).
+     * @param[in] ot_size The size of correlated ot.
+     * @param[in] delta The delta value of correlated ot.
+     * @param[in] msgs Messages to send.
+     * @throws std::invalid_argument if length of LabelType > 128 bits.
+     */
+    void get_batch_cot(const std::shared_ptr<network::Network>& net, const std::size_t ot_size,
+            const std::vector<std::int64_t>& delta, std::vector<std::vector<std::int64_t>>& msgs);
+
+    /**
+     * @brief Random Correlated OT API for the receiver.
+     *
+     * @param[in] net The network instance (e.g., from PETAce-Network).
+     * @param[in] ot_size The size of correlated ot.
+     * @param[out] choices Choices bits for OT.
+     * @param[out] msgs Messages received according to the choices.
+     */
+    void get_batch_cot(const std::shared_ptr<network::Network>& net, const std::size_t ot_size,
             std::vector<std::int8_t>& choices, std::vector<std::int64_t>& msgs);
 
     /**

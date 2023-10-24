@@ -83,7 +83,7 @@ ArithMatrix Permutation::permute(const ArithMatrix& in) const {
     ArithMatrix out(in.rows(), in.cols());
     std::size_t rows = in.rows();
     for (std::size_t i = 0; i < rows; ++i) {
-        out.shares.row(i) = in.shares.row(data_[i]);
+        out.shares().row(i) = in.shares().row(data_[i]);
     }
     return out;
 }

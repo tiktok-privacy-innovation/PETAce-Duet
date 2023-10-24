@@ -15,6 +15,7 @@
 #pragma once
 
 #include <iomanip>
+#include <iostream>
 
 #include "duet/util/defines.h"
 
@@ -38,12 +39,7 @@ void print_vector(const std::vector<DataType>& in) {
     std::cout << std::endl;
 }
 
-inline void print_block(block& in) {
-    for (std::size_t i = 0; i < 2; ++i) {
-        std::cout << std::setiosflags(std::ios::left) << std::setw(21) << in[i];
-    }
-    std::cout << std::endl;
-}
+void print_block(block& in);
 
 }  // namespace duet
 }  // namespace petace

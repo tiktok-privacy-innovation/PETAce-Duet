@@ -16,6 +16,9 @@
 set(DUET_SOURCE_FILES ${DUET_SOURCE_FILES}
     ${CMAKE_CURRENT_LIST_DIR}/permutation.cpp
     ${CMAKE_CURRENT_LIST_DIR}/secret_shared_shuffle.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/prng.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/io.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/matrix.cpp
 )
 
 # Add header files for installation
@@ -27,6 +30,8 @@ install(
         ${CMAKE_CURRENT_LIST_DIR}/prng.h
         ${CMAKE_CURRENT_LIST_DIR}/permutation.h
         ${CMAKE_CURRENT_LIST_DIR}/secret_shared_shuffle.h
+        ${CMAKE_CURRENT_LIST_DIR}/consts.h
+        ${CMAKE_CURRENT_LIST_DIR}/matrix.h
 
     DESTINATION
         ${DUET_INCLUDES_INSTALL_DIR}/duet/util

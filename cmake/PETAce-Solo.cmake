@@ -14,8 +14,8 @@
 
 FetchContent_Declare(
     solo
-    GIT_REPOSITORY git@github.com:tiktok-privacy-innovation/PETAce-Solo.git
-    GIT_TAG        471d70069a684a23b6c11319643a73e005547a01  # dev
+    GIT_REPOSITORY https://github.com/tiktok-privacy-innovation/PETAce-Solo.git
+    GIT_TAG        ead22f615120a0cd9926cfc5d5787fe4bcda379c # 0.2.0
 )
 FetchContent_GetProperties(solo)
 
@@ -26,6 +26,7 @@ if(NOT solo_POPULATED)
     set(SOLO_BUILD_TEST OFF CACHE BOOL "" FORCE)
     set(SOLO_BUILD_BENCH OFF CACHE BOOL "" FORCE)
     set(SOLO_BUILD_EXAMPLE OFF CACHE BOOL "" FORCE)
+    set(SOLO_USE_IPCL ON CACHE BOOL "" FORCE)
 
     mark_as_advanced(FETCHCONTENT_SOURCE_DIR_SOLO)
     mark_as_advanced(FETCHCONTENT_UPDATES_DISCONNECTED_SOLO)

@@ -20,7 +20,7 @@ namespace petace {
 namespace duet {
 
 void STGenerator::get_st(std::size_t rows, std::size_t cols, const std::shared_ptr<network::Network>& net,
-        Permutation& p, PlainMatrix<std::int64_t>& delta) {
+        Permutation& p, Matrix<std::int64_t>& delta) {
     ShareTranslation st_generator(rows);
     std::vector<std::vector<OTChoice>> all_choice;
     st_generator.active_phase_1(p, all_choice);
@@ -45,7 +45,7 @@ void STGenerator::get_st(std::size_t rows, std::size_t cols, const std::shared_p
 }
 
 void STGenerator::get_st(std::size_t rows, std::size_t cols, const std::shared_ptr<network::Network>& net,
-        PlainMatrix<std::int64_t>& a, PlainMatrix<std::int64_t>& b) {
+        Matrix<std::int64_t>& a, Matrix<std::int64_t>& b) {
     ShareTranslation st_generator(rows);
     std::vector<std::vector<std::vector<GGMTreeNode>>> all_levels_sums;
     st_generator.passive_phase_1<std::int64_t>(cols, all_levels_sums, a, b);

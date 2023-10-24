@@ -12,6 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Source files in this directory
+set(DUET_SOURCE_FILES ${DUET_SOURCE_FILES}
+    ${CMAKE_CURRENT_LIST_DIR}/arithmetic_triplet.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/boolean_triplet.cpp
+)
+
 # Add header files for installation
 install(
     FILES

@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <random>
+#include <memory>
 #include <vector>
 
 #include "solo/prng.h"
@@ -42,22 +42,7 @@ public:
      * @param[in] common_seed Seed of common PRNG which will generate same random number in both party.
      * @param[in] buff_size The size of the buffer. Default 256. Unit is 128 bits.
      */
-    explicit PRNG(const block& common_seed, std::int64_t buff_size = 256) {
-        solo::PRNGFactory prng_factory(solo::PRNGScheme::AES_ECB_CTR);
-
-        // common_rand_gen_idx = 0;
-        common_rand_buff.resize(buff_size);
-        std::vector<solo::Byte> seed(sizeof(block));
-        memcpy(seed.data(), reinterpret_cast<solo::Byte*>(const_cast<block*>(&common_seed)), sizeof(block));
-        common_rand_gen = prng_factory.create(seed);
-
-        // unique_rand_gen_idx = 0;
-        unique_rand_buff.resize(buff_size);
-        unique_rand_gen = prng_factory.create(sizeof(block));
-
-        refill_common_buffer();
-        refill_unique_buffer();
-    }
+    explicit PRNG(const block& common_seed, std::int64_t buff_size = 256);
 
     ~PRNG() = default;
 
@@ -66,42 +51,21 @@ public:
      *
      * @return A random std::int64_t number.
      */
-    std::int64_t get_common_rand() {
-        if (common_rand_idx + sizeof(std::int64_t) > common_rand_buff.size() * sizeof(block)) {
-            refill_common_buffer();
-        }
-        std::int64_t ret = *(std::int64_t*)((std::uint8_t*)common_rand_buff.data() + common_rand_idx);  // NOLINT
-        common_rand_idx += sizeof(std::int64_t);
-        return ret;
-    }
+    std::int64_t get_common_rand();
 
     /**
      * Each party will get different random number.
      *
-     * @return A random std::int64_t number.
+     * @return A random int like number, depends on DataType.
      */
-    std::int64_t get_unique_rand() {
-        if (unique_rand_idx + sizeof(std::int64_t) > unique_rand_buff.size() * sizeof(block)) {
+    template <typename DataType>
+    DataType get_unique_rand() {
+        if (unique_rand_idx + sizeof(DataType) > unique_rand_buff.size() * sizeof(block)) {
             refill_unique_buffer();
         }
 
-        std::int64_t ret = *(std::int64_t*)((std::uint8_t*)unique_rand_buff.data() + unique_rand_idx);  // NOLINT
-        unique_rand_idx += sizeof(std::int64_t);
-        return ret;
-    }
-
-    /**
-     * Each party will get different random number.
-     *
-     * @return A random std::int8_t number.
-     */
-    std::int8_t get_unique_rand_int8() {
-        if (unique_rand_idx + sizeof(std::int8_t) > unique_rand_buff.size() * sizeof(block)) {
-            refill_unique_buffer();
-        }
-
-        std::int8_t ret = *(std::int8_t*)((std::uint8_t*)unique_rand_buff.data() + unique_rand_idx);  // NOLINT
-        unique_rand_idx += sizeof(std::int8_t);
+        DataType ret = *(DataType*)((std::uint8_t*)unique_rand_buff.data() + unique_rand_idx);  // NOLINT
+        unique_rand_idx += sizeof(DataType);
         return ret;
     }
 
@@ -113,17 +77,9 @@ private:
     std::vector<block> common_rand_buff{};
     std::vector<block> unique_rand_buff{};
 
-    void refill_common_buffer() {
-        common_rand_gen->generate(
-                common_rand_buff.size() * sizeof(block), reinterpret_cast<solo::Byte*>(common_rand_buff.data()));
-        common_rand_idx = 0;
-    }
+    void refill_common_buffer();
 
-    void refill_unique_buffer() {
-        unique_rand_gen->generate(
-                unique_rand_buff.size() * sizeof(block), reinterpret_cast<solo::Byte*>(unique_rand_buff.data()));
-        unique_rand_idx = 0;
-    }
+    void refill_unique_buffer();
 };
 
 }  // namespace duet

@@ -31,8 +31,8 @@ void bm_share_translation_name(benchmark::State& state, std::size_t rows, std::s
         std::vector<std::vector<petace::duet::OTChoice>> all_choice;
         test.active_phase_1(p, all_choice);
         std::vector<std::vector<std::vector<petace::duet::GGMTreeNode>>> all_levels_sums;
-        petace::duet::PlainMatrix<std::int64_t> a;
-        petace::duet::PlainMatrix<std::int64_t> b;
+        petace::duet::Matrix<std::int64_t> a;
+        petace::duet::Matrix<std::int64_t> b;
         test.passive_phase_1<std::int64_t>(cols, all_levels_sums, a, b);
 
         // mock_ot
@@ -48,7 +48,7 @@ void bm_share_translation_name(benchmark::State& state, std::size_t rows, std::s
             }
         }
 
-        petace::duet::PlainMatrix<std::int64_t> delta;
+        petace::duet::Matrix<std::int64_t> delta;
         test.active_phase_2<std::int64_t>(cols, p, all_need_levels_sums, delta);
     }
 }

@@ -14,11 +14,12 @@
 
 #include <iostream>
 
-#include "duet_example.h"
 #include "tclap/CmdLine.h"
 
 #include "network/net_factory.h"
 #include "network/network.h"
+
+#include "duet_example.h"
 
 int main(int argc, char** argv) {
     try {
@@ -70,7 +71,7 @@ int main(int argc, char** argv) {
         } else if (which_case == "mul") {
             mul_test(net, duet);
         } else if (which_case == "shuffle") {
-            plain_shuffle_test(net, duet);
+            private_shuffle_test(net, duet);
         } else if (which_case == "less than zero") {
             less_than_zero_test(net, duet);
         } else if (which_case == "millionaires") {
@@ -79,6 +80,8 @@ int main(int argc, char** argv) {
             ppml(net, duet);
         } else if (which_case == "distance") {
             distance(net, duet);
+        } else if (which_case == "paillier") {
+            dot_product_paillier(net, duet);
         } else if (which_case == "all") {
             std::cout << "Running: "
                       << "add" << std::endl;
@@ -88,7 +91,7 @@ int main(int argc, char** argv) {
             mul_test(net, duet);
             std::cout << "Running: "
                       << "shuffle" << std::endl;
-            plain_shuffle_test(net, duet);
+            private_shuffle_test(net, duet);
             std::cout << "Running: "
                       << "less than zero" << std::endl;
             less_than_zero_test(net, duet);
@@ -101,6 +104,9 @@ int main(int argc, char** argv) {
             std::cout << "Running: "
                       << "distance" << std::endl;
             distance(net, duet);
+            std::cout << "Running: "
+                      << "Paillier dot product" << std::endl;
+            dot_product_paillier(net, duet);
         } else {
             std::cout << "unknown case" << std::endl;
         }

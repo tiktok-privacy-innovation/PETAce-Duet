@@ -20,117 +20,26 @@
 
 #include "Eigen/Dense"
 
+#include "solo/ahe_paillier.h"
+
 namespace petace {
 namespace duet {
 
 // some declarations
 using block = __m128i;
-
-// parameters for cheetah secure comparison
-// note: when setting up these parameters, we need to guarantee that the number of the blocks is a power of 2.
-const std::size_t kBlockBitLength = 1;
-const std::size_t kOTSize = std::size_t(1) << kBlockBitLength;
-
 using PRGSeed = block;
 using OTLabel = block;
 using OTChoice = std::int8_t;
 using GGMTreeNode = block;
 using GGMTreePuncChoice = std::int8_t;
 using Buffer = std::vector<std::int8_t>;
+using RegisterAddress = std::uint64_t;
+using PublicDouble = double;
+using PublicIndex = std::size_t;
+using ByteVector = std::vector<solo::Byte>;
 
 template <typename T>
-using PlainMatrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
-
-class BoolMatrix {
-public:
-    BoolMatrix() {
-    }
-
-    BoolMatrix(std::size_t x_size, std::size_t y_size) {
-        resize(x_size, y_size);
-    }
-
-    PlainMatrix<std::int64_t> shares;
-
-    std::size_t rows() const {
-        return shares.rows();
-    }
-    std::size_t cols() const {
-        return shares.cols();
-    }
-    std::size_t size() const {
-        return shares.size();
-    }
-
-    void resize(std::size_t x_size, std::size_t y_size) {
-        shares.resize(x_size, y_size);
-    }
-
-    BoolMatrix operator^(const BoolMatrix& b) const {
-        BoolMatrix c;
-        c.shares.resize(b.rows(), b.cols());
-        for (std::size_t i = 0; i < b.size(); i++) {
-            c.shares(i) = shares(i) ^ b.shares(i);
-        }
-        return c;
-    }
-
-    BoolMatrix operator&(const BoolMatrix& b) const {
-        BoolMatrix c;
-        c.shares.resize(b.rows(), b.cols());
-        for (std::size_t i = 0; i < b.size(); i++) {
-            c.shares(i) = shares(i) & b.shares(i);
-        }
-        return c;
-    }
-};
-
-class ArithMatrix {
-public:
-    ArithMatrix() {
-    }
-
-    ArithMatrix(std::size_t x_size, std::size_t y_size) {
-        resize(x_size, y_size);
-    }
-
-    PlainMatrix<std::int64_t> shares;
-
-    std::size_t rows() const {
-        return shares.rows();
-    }
-    std::size_t cols() const {
-        return shares.cols();
-    }
-    std::size_t size() const {
-        return shares.size();
-    }
-
-    void resize(std::size_t x_size, std::size_t y_size) {
-        shares.resize(x_size, y_size);
-    }
-
-    ArithMatrix operator+(const ArithMatrix& b) const {
-        ArithMatrix c;
-        c.shares.resize(b.rows(), b.cols());
-        c.shares = shares + b.shares;
-        return c;
-    }
-
-    ArithMatrix operator-(const ArithMatrix& b) const {
-        ArithMatrix c;
-        c.shares.resize(b.rows(), b.cols());
-        c.shares = shares - b.shares;
-        return c;
-    }
-
-    ArithMatrix operator*(const ArithMatrix& b) const {
-        ArithMatrix c;
-        c.shares.resize(b.rows(), b.cols());
-        c.shares = shares.cwiseProduct(b.shares);
-        return c;
-    }
-};
+using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
 }  // namespace duet
 }  // namespace petace

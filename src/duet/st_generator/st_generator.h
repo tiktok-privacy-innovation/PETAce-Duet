@@ -53,7 +53,7 @@ public:
      * @param[in] delta delta of the tuple (p, delta, a, b);
      */
     void get_st(std::size_t rows, std::size_t cols, const std::shared_ptr<network::Network>& net, Permutation& p,
-            PlainMatrix<std::int64_t>& delta);
+            Matrix<std::int64_t>& delta);
 
     /**
      * @brief Get a&b.
@@ -65,7 +65,7 @@ public:
      * @param[in] b b of the tuple (p, delta, a, b);
      */
     void get_st(std::size_t rows, std::size_t cols, const std::shared_ptr<network::Network>& net,
-            PlainMatrix<std::int64_t>& a, PlainMatrix<std::int64_t>& b);
+            Matrix<std::int64_t>& a, Matrix<std::int64_t>& b);
 
 private:
     STGenerator(const STGenerator&) = delete;

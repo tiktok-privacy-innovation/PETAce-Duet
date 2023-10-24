@@ -21,25 +21,38 @@ void add_test(const std::shared_ptr<petace::network::Network>& net, const std::s
     std::size_t cols = 2;
     std::size_t size = rows * cols;
 
-    petace::duet::PlainMatrix<double> plain(rows, cols);
-    petace::duet::PlainMatrix<double> ret(rows, cols);
-    for (std::size_t i = 0; i < size; i++) {
-        plain(i) = static_cast<double>(duet->party() == 0 ? i : (i * 99 + 1));
+    petace::duet::PrivateMatrix<double> private_0(rows, cols, 0);
+    petace::duet::PrivateMatrix<double> private_1(rows, cols, 1);
+    petace::duet::PrivateMatrix<double> ret(rows, cols, 0);
+    if (duet->party() == 0) {
+        for (std::size_t i = 0; i < size; i++) {
+            private_0(i) = static_cast<double>(i);
+        }
+    } else {
+        for (std::size_t i = 0; i < size; i++) {
+            private_1(i) = static_cast<double>(i * 99 + 1);
+        }
     }
+
     std::cout << "party " << duet->party() << " input is: " << std::endl;
-    std::cout << plain << std::endl;
+    if (duet->party() == 0) {
+        std::cout << private_0.matrix() << std::endl;
+    } else {
+        std::cout << private_1.matrix() << std::endl;
+    }
+
     petace::duet::ArithMatrix cipher0(rows, cols);
     petace::duet::ArithMatrix cipher1(rows, rows);
     petace::duet::ArithMatrix cipher2(rows, rows);
 
-    duet->share(net, 0, plain, cipher0);
-    duet->share(net, 1, plain, cipher1);
+    duet->share(net, private_0, cipher0);
+    duet->share(net, private_1, cipher1);
     duet->add(cipher0, cipher1, cipher2);
 
-    duet->reveal(net, 0, cipher2, ret);
+    duet->reveal(net, cipher2, ret);
     if (duet->party() == 0) {
-        std::cout << "reveal to party 0, ret is: " << std::endl;
-        std::cout << ret << std::endl;
+        std::cout << "reveal to party " << ret.party_id() << ", ret is: " << std::endl;
+        std::cout << ret.matrix() << std::endl;
     }
 }
 
@@ -48,50 +61,63 @@ void mul_test(const std::shared_ptr<petace::network::Network>& net, const std::s
     std::size_t cols = 2;
     std::size_t size = rows * cols;
 
-    petace::duet::PlainMatrix<double> plain(rows, cols);
-    petace::duet::PlainMatrix<double> ret(rows, cols);
-    for (std::size_t i = 0; i < size; i++) {
-        plain(i) = static_cast<double>(duet->party() == 0 ? i : (i * 99 + 1));
+    petace::duet::PrivateMatrix<double> private_0(rows, cols, 0);
+    petace::duet::PrivateMatrix<double> private_1(rows, cols, 1);
+    petace::duet::PrivateMatrix<double> ret(rows, cols, 0);
+    if (duet->party() == 0) {
+        for (std::size_t i = 0; i < size; i++) {
+            private_0(i) = static_cast<double>(i);
+        }
+    } else {
+        for (std::size_t i = 0; i < size; i++) {
+            private_1(i) = static_cast<double>(i * 99 + 1);
+        }
     }
+
     std::cout << "party " << duet->party() << " input is: " << std::endl;
-    std::cout << plain << std::endl;
+    if (duet->party() == 0) {
+        std::cout << private_0.matrix() << std::endl;
+    } else {
+        std::cout << private_1.matrix() << std::endl;
+    }
+
     petace::duet::ArithMatrix cipher0(rows, cols);
     petace::duet::ArithMatrix cipher1(rows, rows);
     petace::duet::ArithMatrix cipher2(rows, rows);
 
-    duet->share(net, 0, plain, cipher0);
-    duet->share(net, 1, plain, cipher1);
+    duet->share(net, private_0, cipher0);
+    duet->share(net, private_1, cipher1);
     duet->elementwise_mul(net, cipher0, cipher1, cipher2);
 
-    duet->reveal(net, 0, cipher2, ret);
+    duet->reveal(net, cipher2, ret);
     if (duet->party() == 0) {
-        std::cout << "reveal to party 0, ret is: " << std::endl;
-        std::cout << ret << std::endl;
+        std::cout << "reveal to party " << ret.party_id() << ", ret is: " << std::endl;
+        std::cout << ret.matrix() << std::endl;
     }
 }
 
-void plain_shuffle_test(
+void private_shuffle_test(
         const std::shared_ptr<petace::network::Network>& net, const std::shared_ptr<petace::duet::Duet>& duet) {
     std::size_t rows = 4;
     std::size_t cols = 2;
     std::size_t size = rows * cols;
 
-    petace::duet::PlainMatrix<double> plain(rows, cols);
-    petace::duet::PlainMatrix<double> ret(rows, cols);
+    petace::duet::PrivateMatrix<double> private_0(rows, cols, 0);
+    petace::duet::PrivateMatrix<double> ret(rows, cols, 0);
     if (duet->party() == 0) {
         for (std::size_t i = 0; i < size; i++) {
-            plain(i) = static_cast<double>(i);
+            private_0(i) = static_cast<double>(i);
         }
         std::cout << "party " << duet->party() << " input is: " << std::endl;
-        std::cout << plain << std::endl;
+        std::cout << private_0.matrix() << std::endl;
     }
 
     petace::duet::ArithMatrix cipher(rows, cols);
-    duet->shuffle(net, 0, plain, cipher);
-    duet->reveal(net, 0, cipher, ret);
+    duet->shuffle(net, private_0, cipher);
+    duet->reveal(net, cipher, ret);
     if (duet->party() == 0) {
-        std::cout << "reveal to party 0, ret is: " << std::endl;
-        std::cout << ret << std::endl;
+        std::cout << "reveal to party " << ret.party_id() << ", ret is: " << std::endl;
+        std::cout << ret.matrix() << std::endl;
     }
 }
 
@@ -101,25 +127,25 @@ void less_than_zero_test(
     std::size_t cols = 2;
     std::size_t size = rows * cols;
 
-    petace::duet::PlainMatrix<double> plain(rows, cols);
-    petace::duet::PlainMatrix<std::int64_t> ret(rows, cols);
+    petace::duet::PrivateMatrix<double> private_0(rows, cols, 0);
+    petace::duet::PrivateMatrixBool ret(rows, cols, 0);
     if (duet->party() == 0) {
         for (std::size_t i = 0; i < size; i++) {
-            plain(i) = static_cast<double>(i);
+            private_0(i) = static_cast<double>(i);
         }
         std::cout << "party " << duet->party() << " input is: " << std::endl;
-        std::cout << plain << std::endl;
+        std::cout << private_0.matrix() << std::endl;
     }
 
     petace::duet::ArithMatrix share(rows, cols);
     petace::duet::BoolMatrix boolen_ret(rows, cols);
 
-    duet->share(net, 0, plain, share);
+    duet->share(net, private_0, share);
     duet->less_than_zero(net, share, boolen_ret);
-    duet->reveal_bool(net, 0, boolen_ret, ret);
+    duet->reveal_bool(net, boolen_ret, ret);
     if (duet->party() == 0) {
-        std::cout << "reveal to party 0, ret is: " << std::endl;
-        std::cout << ret << std::endl;
+        std::cout << "reveal to party " << ret.party_id() << ", ret is: " << std::endl;
+        std::cout << ret.matrix() << std::endl;
     }
 }
 
@@ -127,35 +153,35 @@ void millionaires(
         const std::shared_ptr<petace::network::Network>& net, const std::shared_ptr<petace::duet::Duet>& duet) {
     std::size_t rows = 1;
     std::size_t cols = 1;
-    petace::duet::PlainMatrix<double> plain_W_Alice(rows, cols);
-    petace::duet::PlainMatrix<double> plain_W_Bob(rows, cols);
-    petace::duet::ArithMatrix share_W_Alice(rows, cols);
-    petace::duet::ArithMatrix share_W_Bob(rows, cols);
+    petace::duet::PrivateMatrix<double> private_w_alice(rows, cols, 0);
+    petace::duet::PrivateMatrix<double> private_w_bob(rows, cols, 1);
+    petace::duet::ArithMatrix share_w_alice(rows, cols);
+    petace::duet::ArithMatrix share_w_bob(rows, cols);
 
     double input = 0;
     if (duet->party() == 0) {
         std::cout << "I'm Alice, input your value:" << std::endl;
         std::cin >> input;
-        plain_W_Alice(0) = input;
+        private_w_alice(0) = input;
     } else {
         std::cout << "I'm Bob, input your value:" << std::endl;
         std::cin >> input;
-        plain_W_Bob(0) = input;
+        private_w_bob(0) = input;
     }
 
     // secret share W_Alice and W_Bob
-    duet->share(net, 0, plain_W_Alice, share_W_Alice);
-    duet->share(net, 1, plain_W_Bob, share_W_Bob);
+    duet->share(net, private_w_alice, share_w_alice);
+    duet->share(net, private_w_bob, share_w_bob);
 
     // compute a secure comparison and get protocol result
     petace::duet::BoolMatrix boolen_ret(rows, cols);
-    petace::duet::PlainMatrix<std::int64_t> ret(rows, cols);
-    petace::duet::ArithMatrix A_minus_B(rows, cols);
+    petace::duet::PrivateMatrixBool ret;
+    petace::duet::ArithMatrix a_minus_b(rows, cols);
 
-    duet->sub(share_W_Alice, share_W_Bob, A_minus_B);
-    duet->less_than_zero(net, A_minus_B, boolen_ret);
+    duet->sub(share_w_alice, share_w_bob, a_minus_b);
+    duet->less_than_zero(net, a_minus_b, boolen_ret);
     // reveal result to Alice
-    duet->reveal_bool(net, 0, boolen_ret, ret);
+    duet->reveal_bool(net, boolen_ret, ret);
     // print the result on Alice side
     if (duet->party() == 0) {
         if (ret(0) == 1) {
@@ -173,9 +199,9 @@ void ppml(const std::shared_ptr<petace::network::Network>& net, const std::share
     std::cout << "Firstly, input parmas number:" << std::endl;
     std::cin >> rows;
 
-    petace::duet::PlainMatrix<double> plain_model(rows, cols);
-    petace::duet::PlainMatrix<double> plain_input(rows, cols);
-    petace::duet::PlainMatrix<double> plain_ret(1, 1);
+    petace::duet::PrivateMatrix<double> private_model(rows, cols, 0);
+    petace::duet::PrivateMatrix<double> private_input(rows, cols, 1);
+    petace::duet::PrivateMatrix<double> private_ret;
     petace::duet::ArithMatrix share_model(rows, cols);
     petace::duet::ArithMatrix share_input(rows, cols);
 
@@ -185,7 +211,7 @@ void ppml(const std::shared_ptr<petace::network::Network>& net, const std::share
         std::cout << "Next, I'm server, input model params:" << std::endl;
         for (std::size_t i = 0; i < rows; i++) {
             std::cout << "input " << i << "th params:" << std::endl;
-            std::cin >> plain_model(i);
+            std::cin >> private_model(i);
         }
     } else {
         // Client
@@ -193,12 +219,12 @@ void ppml(const std::shared_ptr<petace::network::Network>& net, const std::share
         std::cout << "Next, I'm client, input sample params:" << std::endl;
         for (std::size_t i = 0; i < rows; i++) {
             std::cout << "input " << i << "th params:" << std::endl;
-            std::cin >> plain_input(i);
+            std::cin >> private_input(i);
         }
     }
     // secret share the model and client input
-    duet->share(net, 0, plain_model, share_model);
-    duet->share(net, 1, plain_input, share_input);
+    duet->share(net, private_model, share_model);
+    duet->share(net, private_input, share_input);
 
     // inner product computation
     petace::duet::ArithMatrix element_mul_res(rows, cols);
@@ -207,10 +233,10 @@ void ppml(const std::shared_ptr<petace::network::Network>& net, const std::share
     // column-wise sum, then the result secret share will be in res(0)
     duet->sum(element_mul_res, res);
 
-    duet->reveal(net, 0, res, plain_ret);
+    duet->reveal(net, res, private_ret);
     if (duet->party() == 0) {
         std::cout << "reveal to party 0, ret is: " << std::endl;
-        std::cout << plain_ret << std::endl;
+        std::cout << private_ret.matrix() << std::endl;
     }
 }
 
@@ -219,41 +245,82 @@ void distance(const std::shared_ptr<petace::network::Network>& net, const std::s
     std::size_t cols = 1;
     std::cout << "Firstly, input vector length:" << std::endl;
     std::cin >> rows;
-    petace::duet::PlainMatrix<double> plain_X(rows, cols);
-    petace::duet::PlainMatrix<double> plain_Y(rows, cols);
-    petace::duet::PlainMatrix<double> plain_ret(1, 1);
-    petace::duet::ArithMatrix share_X(rows, cols);
-    petace::duet::ArithMatrix share_Y(rows, cols);
+    petace::duet::PrivateMatrix<double> private_x(rows, cols, 0);
+    petace::duet::PrivateMatrix<double> private_y(rows, cols, 1);
+    petace::duet::PrivateMatrix<double> private_ret;
+    petace::duet::ArithMatrix share_x(rows, cols);
+    petace::duet::ArithMatrix share_y(rows, cols);
 
     if (duet->party() == 0) {
         // party_0 puts his private coordinate here
         std::cout << "Next, I'm Alice, input vector:" << std::endl;
         for (std::size_t i = 0; i < rows; i++) {
             std::cout << "input " << i << "th value:" << std::endl;
-            std::cin >> plain_X(i);
+            std::cin >> private_x(i);
         }
     } else {
         // party_1 puts his private coordinate here
         std::cout << "Next, I'm Bob, input vector:" << std::endl;
         for (std::size_t i = 0; i < rows; i++) {
             std::cout << "input " << i << "th value:" << std::endl;
-            std::cin >> plain_Y(i);
+            std::cin >> private_y(i);
         }
     }
     // secret share the model and client input
-    duet->share(net, 0, plain_X, share_X);
-    duet->share(net, 1, plain_Y, share_Y);
+    duet->share(net, private_x, share_x);
+    duet->share(net, private_y, share_y);
 
-    petace::duet::ArithMatrix X_minus_Y(rows, cols);
-    petace::duet::ArithMatrix X_minus_Y_square(rows, cols);
+    petace::duet::ArithMatrix x_minus_y(rows, cols);
+    petace::duet::ArithMatrix x_minus_y_square(rows, cols);
     petace::duet::ArithMatrix res(1, 1);
-    duet->sub(share_X, share_Y, X_minus_Y);
-    duet->elementwise_mul(net, X_minus_Y, X_minus_Y, X_minus_Y_square);
+    duet->sub(share_x, share_y, x_minus_y);
+    duet->elementwise_mul(net, x_minus_y, x_minus_y, x_minus_y_square);
     // column-wise sum, then the result secret share will be in res(0)
-    duet->sum(X_minus_Y_square, res);
-    duet->reveal(net, 0, res, plain_ret);
+    duet->sum(x_minus_y_square, res);
+    duet->reveal(net, res, private_ret);
     if (duet->party() == 0) {
         std::cout << "reveal to party 0, ret is: " << std::endl;
-        std::cout << plain_ret << std::endl;
+        std::cout << private_ret.matrix() << std::endl;
+    }
+}
+
+void dot_product_paillier(
+        const std::shared_ptr<petace::network::Network>& net, const std::shared_ptr<petace::duet::Duet>& duet) {
+    std::size_t rows = 0;
+    std::size_t cols = 1;
+    std::cout << "Firstly, input vector length:" << std::endl;
+    std::cin >> rows;
+    petace::duet::PrivateMatrix<int64_t> private_x(rows, cols, 0);
+    petace::duet::PrivateMatrix<int64_t> private_y(rows, cols, 1);
+    petace::duet::PrivateMatrix<int64_t> private_ret(rows, cols, 0);
+    petace::duet::PaillierMatrix cipher_x(rows, cols);
+    petace::duet::PaillierMatrix cipher_x_received(rows, cols);
+    petace::duet::PaillierMatrix cipher_result(rows, cols);
+    if (duet->party() == 0) {
+        // party_0 puts his private coordinate here
+        std::cout << "Next, I'm Alice, input vector: (please use integer)" << std::endl;
+        for (std::size_t i = 0; i < rows; i++) {
+            std::cout << "input " << i << "th value:" << std::endl;
+            std::cin >> private_x(i);
+        }
+        duet->encrypt(private_x, cipher_x);
+        petace::duet::send_cipher(net, cipher_x, petace::duet::kPaillierKeySize);
+        petace::duet::recv_cipher(net, duet->get_pk(), cipher_result, petace::duet::kPaillierKeySize);
+        duet->decrypt(cipher_result, private_ret);
+        std::int64_t result = 0;
+        for (std::size_t i = 0; i < rows; i++) {
+            result += private_ret(i);
+        }
+        std::cout << "result is available to party 0, result is: " << result << std::endl;
+    } else {
+        // party_1 puts his private coordinate here
+        std::cout << "Next, I'm Bob, input vector: (please use integer)" << std::endl;
+        for (std::size_t i = 0; i < rows; i++) {
+            std::cout << "input " << i << "th value:" << std::endl;
+            std::cin >> private_y(i);
+        }
+        petace::duet::recv_cipher(net, duet->get_pk_other(), cipher_x_received, petace::duet::kPaillierKeySize);
+        duet->mul(private_y, cipher_x_received, cipher_result);
+        petace::duet::send_cipher(net, cipher_result, petace::duet::kPaillierKeySize);
     }
 }

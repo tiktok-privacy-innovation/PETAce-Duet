@@ -14,54 +14,35 @@
 
 #pragma once
 
-#include <emmintrin.h>
-
-#include <random>
+#include <memory>
 
 #include "Eigen/Dense"
 
 #include "network/network.h"
 
+#include "duet/util/consts.h"
+#include "duet/util/defines.h"
+#include "duet/util/matrix.h"
+
 namespace petace {
 namespace duet {
 
-inline void send_block(const std::shared_ptr<network::Network>& net, const block* data, std::size_t nblock) {
-    net->send_data(data, nblock * sizeof(block));
-}
+void send_block(const std::shared_ptr<network::Network>& net, const block* data, std::size_t nblock);
 
-inline void recv_block(const std::shared_ptr<network::Network>& net, block* data, std::size_t nblock) {
-    net->recv_data(data, nblock * sizeof(block));
-}
+void recv_block(const std::shared_ptr<network::Network>& net, block* data, std::size_t nblock);
 
-inline void send_bool(const std::shared_ptr<network::Network>& net, bool* data, std::size_t length) {
-    std::size_t byte_len = (length + 7) / 8;
-    std::vector<uint8_t> byte_buf(byte_len, 0);
-    for (std::size_t i = 0; i < length; i++) {
-        byte_buf[i / 8] |= static_cast<uint8_t>(static_cast<uint8_t>(data[i]) << (7 - (i % 8)));
-    }
-    net->send_data(byte_buf.data(), byte_len);
-}
+void send_bool(const std::shared_ptr<network::Network>& net, bool* data, std::size_t length);
 
-inline void recv_bool(const std::shared_ptr<network::Network>& net, bool* data, std::size_t length) {
-    std::size_t byte_len = (length + 7) / 8;
-    std::vector<uint8_t> byte_buf(byte_len);
-    net->recv_data(byte_buf.data(), byte_len);
-    for (std::size_t i = 0; i < length; i++) {
-        data[i] = static_cast<bool>((byte_buf[i / 8] >> (7 - (i % 8))) & 0x1);
-    }
-}
+void recv_bool(const std::shared_ptr<network::Network>& net, bool* data, std::size_t length);
 
-inline void send_matrix(
-        const std::shared_ptr<network::Network>& net, const PlainMatrix<std::int64_t>* data, std::size_t nmatrix) {
-    net->send_data(data->data(), nmatrix * data->size() * sizeof(std::int64_t));
-}
+void send_matrix(const std::shared_ptr<network::Network>& net, const Matrix<std::int64_t>* data, std::size_t nmatrix);
 
-inline void recv_matrix(
-        const std::shared_ptr<network::Network>& net, PlainMatrix<std::int64_t>* data, std::size_t nmatrix) {
-    std::vector<std::int64_t> buf(data->size() * nmatrix);
-    net->recv_data(&buf[0], nmatrix * data->size() * sizeof(std::int64_t));
-    *data = Eigen::Map<PlainMatrix<std::int64_t>>(buf.data(), data->rows(), data->cols());
-}
+void recv_matrix(const std::shared_ptr<network::Network>& net, Matrix<std::int64_t>* data, std::size_t nmatrix);
+
+void send_cipher(const std::shared_ptr<network::Network>& net, const PaillierMatrix& in, std::size_t paillier_key_size);
+
+void recv_cipher(const std::shared_ptr<network::Network>& net, const std::shared_ptr<solo::ahepaillier::PublicKey>& pk,
+        PaillierMatrix& out, std::size_t paillier_key_size);
 
 }  // namespace duet
 }  // namespace petace

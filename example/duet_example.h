@@ -17,12 +17,13 @@
 #include "network/net_socket.h"
 
 #include "duet/duet.h"
+#include "duet/util/consts.h"
 
 void add_test(const std::shared_ptr<petace::network::Network>& net, const std::shared_ptr<petace::duet::Duet>& duet);
 
 void mul_test(const std::shared_ptr<petace::network::Network>& net, const std::shared_ptr<petace::duet::Duet>& duet);
 
-void plain_shuffle_test(
+void private_shuffle_test(
         const std::shared_ptr<petace::network::Network>& net, const std::shared_ptr<petace::duet::Duet>& duet);
 
 void less_than_zero_test(
@@ -34,3 +35,6 @@ void millionaires(
 void ppml(const std::shared_ptr<petace::network::Network>& net, const std::shared_ptr<petace::duet::Duet>& duet);
 
 void distance(const std::shared_ptr<petace::network::Network>& net, const std::shared_ptr<petace::duet::Duet>& duet);
+
+void dot_product_paillier(
+        const std::shared_ptr<petace::network::Network>& net, const std::shared_ptr<petace::duet::Duet>& duet);

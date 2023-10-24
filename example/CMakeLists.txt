@@ -14,14 +14,14 @@
 
 cmake_minimum_required(VERSION 3.14)
 
-project(DUETExample VERSION 0.1.0 LANGUAGES CXX)
+project(DUETExample VERSION 0.2.0 LANGUAGES CXX)
 
 # If not called from root CMakeLists.txt
 if(NOT DEFINED DUET_BUILD_EXAMPLE)
     set(DUET_BUILD_EXAMPLE ON)
 
     # Import PETAce DUET
-    find_package(PETAce-Duet 0.1.0 EXACT REQUIRED)
+    find_package(PETAce-Duet 0.2.0 EXACT REQUIRED)
 
     add_compile_options(-msse4.2 -Wno-ignored-attributes -mavx)
 

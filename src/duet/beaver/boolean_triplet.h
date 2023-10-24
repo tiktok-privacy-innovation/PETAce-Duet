@@ -18,7 +18,6 @@
 #include <vector>
 
 #include "network/network.h"
-#include "solo/prng.h"
 
 #include "duet/ot_generator/ot_generator.h"
 
@@ -32,24 +31,17 @@ namespace duet {
  */
 class BooleanTriplet {
 public:
-    BooleanTriplet() = default;
-
-    ~BooleanTriplet() = default;
-
     /**
-     * @brief Initializer of the class.
+     * @brief Constructor of the class.
      *
      * @param[in] net The network instance (e.g., from PETAce-Network)
      * @param[in] party The party id
      * @param[in] ot The OT instance
      */
-    void initialize(
-            const std::shared_ptr<network::Network>& net, std::size_t party, const std::shared_ptr<OTGenerator>& ot) {
-        party_id_ = party;
-        ot_ = ot;
-        rand_triplet_buff.resize(8192);
-        refill_rand_triplet_buffer(net, party);
-    }
+    BooleanTriplet(
+            const std::shared_ptr<network::Network>& net, std::size_t party_id, const std::shared_ptr<OTGenerator>& ot);
+
+    ~BooleanTriplet() = default;
 
     /**
      * @brief Returns a Beaver triplets.
@@ -58,137 +50,19 @@ public:
      * @param[in] party The party id
      * @return A random Beaver triplet
      */
-    std::vector<std::int64_t> get_rand_triplet(const std::shared_ptr<network::Network>& net, std::size_t party) {
-        if (rand_triplet_idx >= rand_triplet_buff.size()) {
-            refill_rand_triplet_buffer(net, party);
-        }
-        std::vector<std::int64_t> ret(3);
-        ret[0] = rand_triplet_buff[rand_triplet_idx][0];
-        ret[1] = rand_triplet_buff[rand_triplet_idx][1];
-        ret[2] = rand_triplet_buff[rand_triplet_idx][2];
-        rand_triplet_idx++;
-        return ret;
-    }
+    std::vector<std::int64_t> get_rand_triplet(const std::shared_ptr<network::Network>& net, std::size_t party);
 
 private:
-    void refill_rand_triplet_buffer(const std::shared_ptr<network::Network>& net, std::size_t party) {
-        gen_rand_triplet(net, party);
-        rand_triplet_idx = 0;
-        return;
-    }
+    void refill_rand_triplet_buffer(const std::shared_ptr<network::Network>& net, std::size_t party);
 
-    void gen_rand_triplet(const std::shared_ptr<network::Network>& net, std::size_t party) {
-        std::size_t tp_buff_size = rand_triplet_buff.size();
-        std::vector<std::int64_t> msgs0(64 * tp_buff_size);
-        std::vector<std::int64_t> msgs1(64 * tp_buff_size);
-        std::vector<std::int64_t> x0(tp_buff_size);
-        std::vector<std::int64_t> x1(tp_buff_size);
-        std::vector<std::int64_t> xa(tp_buff_size);
-        std::vector<std::int64_t> a0(tp_buff_size);
-        std::vector<std::int64_t> b1(tp_buff_size);
-        std::vector<std::int64_t> u0(tp_buff_size);
-        std::vector<std::int64_t> v0(tp_buff_size);
+    void gen_rand_triplet(const std::shared_ptr<network::Network>& net, std::size_t party);
 
-        if (party == 0) {
-            for (std::size_t i = 0; i < 64 * tp_buff_size; i++) {
-                std::vector<std::int64_t> msg;
-                ot_->get_random_ot(net, msg);
-                msgs0[i] = msg[0];
-                msgs1[i] = msg[1];
-            }
-            lsb_to_int64(msgs0, x0);
-            lsb_to_int64(msgs1, x1);
-        } else {
-            for (std::size_t i = 0; i < 64 * tp_buff_size; i++) {
-                std::int64_t msg;
-                std::int8_t choice;
-                ot_->get_random_ot(net, choice, msg);
-                msgs0[i] = msg;
-                msgs1[i] = static_cast<std::int64_t>(choice);
-            }
-            lsb_to_int64(msgs0, xa);
-            lsb_to_int64(msgs1, a0);
-        }
-
-        if (party == 0) {
-            for (std::size_t i = 0; i < tp_buff_size; i++) {
-                b1[i] = x0[i] ^ x1[i];
-                v0[i] = x0[i];
-            }
-        } else {
-            for (std::size_t i = 0; i < tp_buff_size; i++) {
-                u0[i] = xa[i];
-            }
-        }
-
-        std::vector<std::int64_t> a1(tp_buff_size), b0(tp_buff_size), u1(tp_buff_size), v1(tp_buff_size);
-
-        if (party == 0) {
-            for (std::size_t i = 0; i < 64 * tp_buff_size; i++) {
-                std::vector<std::int64_t> msg;
-                ot_->get_random_ot(net, msg);
-                msgs0[i] = msg[0];
-                msgs1[i] = msg[1];
-            }
-            lsb_to_int64(msgs0, x0);
-            lsb_to_int64(msgs1, x1);
-        } else {
-            for (std::size_t i = 0; i < 64 * tp_buff_size; i++) {
-                std::int64_t msg;
-                std::int8_t choice;
-                ot_->get_random_ot(net, choice, msg);
-                msgs0[i] = msg;
-                msgs1[i] = static_cast<std::int64_t>(choice);
-            }
-            lsb_to_int64(msgs0, xa);
-            lsb_to_int64(msgs1, b0);
-        }
-
-        if (party == 0) {
-            for (std::size_t i = 0; i < tp_buff_size; i++) {
-                a1[i] = x0[i] ^ x1[i];
-                v1[i] = x0[i];
-            }
-        } else {
-            for (std::size_t i = 0; i < tp_buff_size; i++) {
-                u1[i] = xa[i];
-            }
-        }
-
-        for (std::size_t i = 0; i < tp_buff_size; i++) {
-            rand_triplet_buff[i].resize(3);
-            if (party == 0) {
-                rand_triplet_buff[i][0] = b1[i];
-                rand_triplet_buff[i][1] = a1[i];
-                rand_triplet_buff[i][2] = (a1[i] & b1[i]) ^ v0[i] ^ v1[i];
-
-            } else {
-                rand_triplet_buff[i][0] = b0[i];
-                rand_triplet_buff[i][1] = a0[i];
-                rand_triplet_buff[i][2] = (a0[i] & b0[i]) ^ u0[i] ^ u1[i];
-            }
-        }
-    }
-
-    inline int lsb_to_int64(const std::vector<std::int64_t>& in, std::vector<std::int64_t>& out) {
-        if ((in.size() % 64) != 0) {
-            return -1;
-        }
-
-        std::size_t k = 0;
-        for (std::size_t i = 0; i < in.size(); i += 64, k++) {
-            out[k] = 0;
-            for (std::size_t j = 0; j < 64; j++) {
-                out[k] = (out[k] << 1) | (in[i + j] & 0x1);
-            }
-        }
-        return 0;
-    }
+    int lsb_to_int64(const std::vector<std::int64_t>& in, std::vector<std::int64_t>& out);
 
     std::size_t rand_triplet_idx = 0;
     std::vector<std::vector<std::int64_t>> rand_triplet_buff{};
-    std::shared_ptr<OTGenerator> ot_ = nullptr;
     std::size_t party_id_ = 0;
+    std::shared_ptr<OTGenerator> ot_ = nullptr;
 };
 
 }  // namespace duet

@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "duet/util/defines.h"
+#include "duet/util/matrix.h"
 
 namespace petace {
 namespace duet {
@@ -105,8 +106,8 @@ public:
     }
 
     template <typename DataType>
-    PlainMatrix<DataType> permute(const PlainMatrix<DataType>& in) const {
-        PlainMatrix<DataType> out(in.rows(), in.cols());
+    Matrix<DataType> permute(const Matrix<DataType>& in) const {
+        Matrix<DataType> out(in.rows(), in.cols());
         std::size_t rows = in.rows();
         for (std::size_t i = 0; i < rows; ++i) {
             out.row(i) = in.row(data_[i]);

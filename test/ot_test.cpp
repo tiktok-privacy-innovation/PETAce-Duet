@@ -158,6 +158,41 @@ public:
         }
     }
 
+    void batch_correlated_ot(bool is_sender) {
+        std::shared_ptr<petace::network::Network> net;
+        if (is_sender) {
+            net = petace::network::NetFactory::get_instance().build(petace::network::NetScheme::SOCKET, net_params0);
+        } else {
+            net = petace::network::NetFactory::get_instance().build(petace::network::NetScheme::SOCKET, net_params1);
+        }
+
+        srandom(static_cast<std::uint32_t>(time(nullptr)));
+        petace::duet::OTGenerator ot(is_sender, _mm_set_epi64x(random(), random()));
+        ot.initialize(net);
+
+        std::size_t ot_len = 16;
+        choices_.resize(ot_len);
+        send_msgs_.resize(ot_len);
+        recv_msgs_.resize(ot_len);
+        for (std::size_t i = 0; i < ot_len; i++) {
+            send_msgs_[i].resize(2);
+        }
+
+        for (std::size_t i = 0; i < ot_len; i++) {
+            deltas_.push_back(random());
+        }
+
+        if (is_sender) {
+            ot.get_batch_cot(net, ot_len, deltas_, send_msgs_);
+            net->recv_data(recv_msgs_.data(), ot_len * sizeof(std::int64_t));
+            net->recv_data(choices_.data(), ot_len * sizeof(std::int8_t));
+        } else {
+            ot.get_batch_cot(net, ot_len, choices_, recv_msgs_);
+            net->send_data(recv_msgs_.data(), ot_len * sizeof(std::int64_t));
+            net->send_data(choices_.data(), ot_len * sizeof(std::int8_t));
+        }
+    }
+
     void one_of_n_ot(bool is_sender) {
         std::shared_ptr<petace::network::Network> net;
         if (is_sender) {
@@ -204,6 +239,7 @@ public:
     std::vector<std::vector<std::int64_t>> send_msgs_;
     std::vector<std::int64_t> recv_msgs_;
     std::int64_t delta_ = 0x12345678;
+    std::vector<std::int64_t> deltas_;
     petace::network::NetParams net_params0;
     petace::network::NetParams net_params1;
 };
@@ -293,6 +329,30 @@ TEST_F(OtTest, correlated_ot) {
         for (std::size_t i = 0; i < 16; i++) {
             EXPECT_EQ(send_msgs_[i][choices_[i]], recv_msgs_[i]);
             EXPECT_EQ(send_msgs_[i][1] - send_msgs_[i][0], delta_);
+        }
+    }
+}
+
+TEST_F(OtTest, batch_correlated_ot) {
+    pid_t pid;
+    int status;
+
+    if ((pid = fork()) < 0) {
+        status = -1;
+    } else if (pid == 0) {
+        batch_correlated_ot(false);
+        exit(EXIT_SUCCESS);
+    } else {
+        batch_correlated_ot(true);
+        while (waitpid(pid, &status, 0) < 0) {
+            if (errno != EINTR) {
+                status = -1;
+                break;
+            }
+        }
+        for (std::size_t i = 0; i < 16; i++) {
+            EXPECT_EQ(send_msgs_[i][choices_[i]], recv_msgs_[i]);
+            EXPECT_EQ(send_msgs_[i][1] - send_msgs_[i][0], deltas_[i]);
         }
     }
 }

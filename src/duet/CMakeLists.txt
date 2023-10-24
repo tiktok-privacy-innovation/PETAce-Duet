@@ -29,5 +29,7 @@ add_subdirectory(util)
 add_subdirectory(ot_generator)
 add_subdirectory(beaver)
 add_subdirectory(st_generator)
+add_subdirectory(paillier_engine)
+add_subdirectory(vm)
 
 set(DUET_SOURCE_FILES ${DUET_SOURCE_FILES} PARENT_SCOPE)

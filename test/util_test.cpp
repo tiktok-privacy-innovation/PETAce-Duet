@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 #include "print_utils.h"
 
+#include "duet/util/matrix.h"
 #include "duet/util/permutation.h"
 
 namespace petace {
@@ -43,7 +44,7 @@ TEST(UtilTest, permute_index) {
 
 TEST(UtilTest, permute_matrix) {
     Permutation p0(5);
-    PlainMatrix<std::size_t> test_matrix0(5, 1);
+    Matrix<std::size_t> test_matrix0(5, 1);
     std::size_t matrix_size = 5;
     for (std::size_t i = 0; i < matrix_size; ++i) {
         test_matrix0(i) = i;
@@ -57,12 +58,12 @@ TEST(UtilTest, permute_matrix) {
 
     ArithMatrix test_matrix1(5, 1);
     for (std::size_t i = 0; i < matrix_size; ++i) {
-        test_matrix1.shares(i) = i;
+        test_matrix1(i) = i;
     }
     auto ret1 = p0.permute(test_matrix1);
     std::vector<std::size_t> ret_vector1(5);
     for (std::size_t i = 0; i < ret_vector1.size(); ++i) {
-        ret_vector1[i] = ret1.shares(i);
+        ret_vector1[i] = ret1(i);
     }
     EXPECT_EQ(ret_vector1, p0.data());
 }
@@ -84,6 +85,96 @@ TEST(UtilTest, permute_combine) {
     Permutation p2 = p0.combine(p1);
     EXPECT_EQ(p2.size(), 8);
     EXPECT_EQ(p2.data(), test_p1);
+}
+
+TEST(UtilTest, private_matrix) {
+    PrivateMatrix<std::int64_t> pm(2, 2, 1);
+    EXPECT_EQ(1, pm.party_id());
+    Matrix<std::int64_t> m(2, 2);
+    pm(0) = 233;
+    m(0) = 456;
+    EXPECT_EQ(pm(0), 233);
+    EXPECT_EQ(pm.matrix()(0), 233);
+    EXPECT_EQ(pm(0, 0), 233);
+    EXPECT_EQ(pm.matrix()(0, 0), 233);
+    pm.matrix()(0) = 789;
+    EXPECT_EQ(pm(0), 789);
+    EXPECT_EQ(pm.matrix()(0), 789);
+    EXPECT_EQ(pm(0, 0), 789);
+    EXPECT_EQ(pm.matrix()(0, 0), 789);
+    pm.matrix() = m;
+    EXPECT_EQ(pm(0), 456);
+    EXPECT_EQ(pm.matrix(), m);
+    PrivateMatrix<std::int64_t> sub_pm;
+    matrix_block(pm, sub_pm, 0, 0, 1, 1, 0);
+    EXPECT_EQ(sub_pm.size(), 0);
+    matrix_block(pm, sub_pm, 0, 0, 1, 1, 1);
+    EXPECT_EQ(sub_pm.size(), 1);
+    EXPECT_EQ(sub_pm.party_id(), 1);
+    EXPECT_EQ(sub_pm(0), 456);
+    Matrix<std::int64_t> vm(4, 2);
+    vm << m, m;
+    PrivateMatrix<std::int64_t> vpm;
+    vstack(pm, pm, vpm, 0);
+    EXPECT_EQ(vpm.size(), 0);
+    vstack(pm, pm, vpm, 1);
+    EXPECT_EQ(vpm.size(), 8);
+    EXPECT_EQ(vpm.matrix(), vm);
+    Matrix<std::int64_t> hm(2, 4);
+    hm << m, m;
+    PrivateMatrix<std::int64_t> hpm;
+    hstack(pm, pm, hpm, 0);
+    EXPECT_EQ(hpm.size(), 0);
+    hstack(pm, pm, hpm, 1);
+    EXPECT_EQ(hpm.size(), 8);
+    EXPECT_EQ(hpm.matrix(), hm);
+}
+
+TEST(UtilTest, private_matrix_index) {
+    PrivateMatrix<std::int64_t> pm_0(0);
+    Matrix<std::int64_t> m_0(2, 2);
+    m_0 << 0, 0, 1, 1;
+    pm_0.index_like(2, 2, 0, 0);
+    EXPECT_EQ(pm_0.matrix(), m_0);
+
+    PrivateMatrix<std::int64_t> pm_1(0);
+    Matrix<std::int64_t> m_1(2, 2);
+    m_1 << 0, 1, 0, 1;
+    pm_1.index_like(2, 2, 1, 0);
+    EXPECT_EQ(pm_1.matrix(), m_1);
+
+    PrivateMatrix<std::int64_t> pm_2(0);
+    Matrix<std::int64_t> m_2(2, 2);
+    m_2 << 0, 1, 2, 3;
+    pm_2.index_like(2, 2, 0);
+    EXPECT_EQ(pm_2.matrix(), m_2);
+}
+
+TEST(UtilTest, public_matrix) {
+    PublicMatrix<std::int64_t> cm(2, 2);
+    Matrix<std::int64_t> m(2, 2);
+    cm(0) = 233;
+    m(0) = 456;
+    EXPECT_EQ(cm(0), 233);
+    EXPECT_EQ(cm.matrix()(0), 233);
+    cm.matrix()(0) = 789;
+    EXPECT_EQ(cm(0), 789);
+    EXPECT_EQ(cm.matrix()(0), 789);
+    cm.matrix() = m;
+    EXPECT_EQ(cm(0), 456);
+    EXPECT_EQ(cm.matrix(), m);
+    Matrix<std::int64_t> vm(4, 2);
+    vm << m, m;
+    PublicMatrix<std::int64_t> vcm;
+    vstack(cm, cm, vcm);
+    EXPECT_EQ(vcm.size(), 8);
+    EXPECT_EQ(vcm.matrix(), vm);
+    Matrix<std::int64_t> hm(2, 4);
+    hm << m, m;
+    PublicMatrix<std::int64_t> hcm;
+    hstack(cm, cm, hcm);
+    EXPECT_EQ(hcm.size(), 8);
+    EXPECT_EQ(hcm.matrix(), hm);
 }
 
 }  // namespace duet
