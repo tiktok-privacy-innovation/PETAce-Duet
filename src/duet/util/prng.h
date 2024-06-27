@@ -69,6 +69,10 @@ public:
         return ret;
     }
 
+    std::shared_ptr<solo::PRNG> get_unique_rand_gen() const {
+        return unique_rand_gen;
+    }
+
 private:
     std::int64_t common_rand_idx = 0;
     std::int64_t unique_rand_idx = 0;

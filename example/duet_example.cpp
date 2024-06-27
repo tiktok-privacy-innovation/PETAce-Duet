@@ -142,7 +142,7 @@ void less_than_zero_test(
 
     duet->share(net, private_0, share);
     duet->less_than_zero(net, share, boolen_ret);
-    duet->reveal_bool(net, boolen_ret, ret);
+    duet->reveal(net, boolen_ret, ret);
     if (duet->party() == 0) {
         std::cout << "reveal to party " << ret.party_id() << ", ret is: " << std::endl;
         std::cout << ret.matrix() << std::endl;
@@ -181,7 +181,7 @@ void millionaires(
     duet->sub(share_w_alice, share_w_bob, a_minus_b);
     duet->less_than_zero(net, a_minus_b, boolen_ret);
     // reveal result to Alice
-    duet->reveal_bool(net, boolen_ret, ret);
+    duet->reveal(net, boolen_ret, ret);
     // print the result on Alice side
     if (duet->party() == 0) {
         if (ret(0) == 1) {

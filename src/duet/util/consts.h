@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <string>
 
 namespace petace {
 namespace duet {
@@ -30,14 +31,29 @@ const std::size_t kPowDepth = 6;
 const std::size_t kKoggeStonePpaDepth = 6;
 // ot
 const std::size_t kDefaultBaseOtSizes = 128;
-const std::size_t kDefaultExtOtSizes = 1024;
-// triplet
-const std::size_t kDefaulBooleanTripletBufferSize = 1024;
-const std::size_t kDefaulArithmeticTripletBufferSize = 1024;
+const std::size_t kDefaultExtOtSizes = 8192;
+// triple
+const std::size_t kDefaulBooleanTripleBufferSize = 1024;
+const std::size_t kDefaulArithmeticTripleBufferSize = 8192;
+// parameters for FHE
+const std::size_t kFHEBatchSize = 8192;
+const std::size_t kPolyModulusDegree = 8192;
+const std::size_t kCRTPrimeCount = 4;
+const std::size_t kFHERandomBitLength = 168;
+const std::string kTwoPowerSixtyFour = "18446744073709551616";
 // parameters for HE
 const std::size_t kPaillierKeySize = 2048;
-const std::size_t kCipherByteSize = (kPaillierKeySize * 2 + 7) / 8;
+const std::size_t kPaillierCipherSize = ((kPaillierKeySize + 7) / 8) * 2;
 const std::size_t kStatisticalLambda = 40;
+const std::size_t kPaillierThreads = 1;
+
+// sigmoid
+const double kSigmoidParmas[3] = {-0.018715, 0.24955, 0.4999};
+// div
+const double kTwoPointNine = 2.9142;
+// max
+const int64_t kMaxValue = 0x000000ffffffffff;
+const int64_t kMinValue = 0x8fffffffffffffff;
 
 }  // namespace duet
 }  // namespace petace

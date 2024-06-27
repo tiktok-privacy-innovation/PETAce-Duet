@@ -14,7 +14,11 @@
 
 # Source files in this directory
 set(DUET_SOURCE_FILES ${DUET_SOURCE_FILES}
-    ${CMAKE_CURRENT_LIST_DIR}/duet.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/duet_base.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/duet_ml.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/duet_sql.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/duet_he.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/duet_stats.cpp
 )
 
 # Add header files for installation
@@ -26,10 +30,10 @@ install(
 )
 
 add_subdirectory(util)
-add_subdirectory(ot_generator)
-add_subdirectory(beaver)
-add_subdirectory(st_generator)
-add_subdirectory(paillier_engine)
+add_subdirectory(oblivious_transfer)
+add_subdirectory(beaver_triple)
+add_subdirectory(share_translation)
+add_subdirectory(paillier)
 add_subdirectory(vm)
 
 set(DUET_SOURCE_FILES ${DUET_SOURCE_FILES} PARENT_SCOPE)

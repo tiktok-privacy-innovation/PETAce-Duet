@@ -14,20 +14,24 @@
 
 #pragma once
 
-#include <cstdint>
+#include "network/net_socket.h"
 
-#if (DUET_COMPILER == DUET_COMPILER_GCC)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#elif (DUET_COMPILER == DUET_COMPILER_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#endif
-#include "benchmark/benchmark.h"
-#if (DUET_COMPILER == DUET_COMPILER_GCC)
-#pragma GCC diagnostic pop
-#elif (DUET_COMPILER == DUET_COMPILER_CLANG)
-#pragma clang diagnostic pop
-#endif
+#include "duet/duet.h"
 
-void bm_share_translation_name(benchmark::State& state, std::size_t rows, std::size_t cols);
+void mul_bench(const std::shared_ptr<petace::network::Network>& net, const std::shared_ptr<petace::duet::Duet>& duet,
+        std::size_t test_number, std::size_t rows, std::size_t cols);
+
+void inner_product_bench(const std::shared_ptr<petace::network::Network>& net,
+        const std::shared_ptr<petace::duet::Duet>& duet, std::size_t test_number, std::size_t vector_size);
+
+void equal_bench(const std::shared_ptr<petace::network::Network>& net, const std::shared_ptr<petace::duet::Duet>& duet,
+        std::size_t test_number, std::size_t rows, std::size_t cols);
+
+void greater_bench(const std::shared_ptr<petace::network::Network>& net,
+        const std::shared_ptr<petace::duet::Duet>& duet, std::size_t test_number, std::size_t rows, std::size_t cols);
+
+void less_bench(const std::shared_ptr<petace::network::Network>& net, const std::shared_ptr<petace::duet::Duet>& duet,
+        std::size_t test_number, std::size_t rows, std::size_t cols);
+
+void less_than_zero_bench(const std::shared_ptr<petace::network::Network>& net,
+        const std::shared_ptr<petace::duet::Duet>& duet, std::size_t test_number, std::size_t rows, std::size_t cols);

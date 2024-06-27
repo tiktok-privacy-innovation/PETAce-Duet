@@ -31,7 +31,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "Build type (CMAKE_BUILD_TYPE): ${CMAKE_BUILD_TYPE}")
 
-project(DUET VERSION 0.2.0 LANGUAGES CXX C)
+project(DUET VERSION 0.3.0 LANGUAGES CXX C)
 
 ########################
 # Global configuration #
@@ -194,7 +194,7 @@ if(NOT TARGET Threads::Threads)
 endif()
 
 # PETAce-Network::network
-find_package(PETAce-Network 0.2 QUIET CONFIG)
+find_package(PETAce-Network 0.3 QUIET CONFIG)
 if(PETAce-Network_FOUND)
     message(STATUS "PETAce-Network: found")
     if(PETAce-Network_STATIC_FOUND)
@@ -218,7 +218,7 @@ else()
 endif()
 
 # PETAce-Solo::solo
-find_package(PETAce-Solo 0.2 QUIET CONFIG)
+find_package(PETAce-Solo 0.3 QUIET CONFIG)
 if(PETAce-Solo_FOUND)
     message(STATUS "PETAce-Solo: found")
     if(PETAce-Solo_STATIC_FOUND)
@@ -242,7 +242,7 @@ else()
 endif()
 
 # PETAce-Verse::verse
-find_package(PETAce-Verse 0.2 QUIET CONFIG)
+find_package(PETAce-Verse 0.3 QUIET CONFIG)
 if(PETAce-Verse_FOUND)
     message(STATUS "PETAce-Verse: found")
     if(PETAce-Verse_STATIC_FOUND)
@@ -282,6 +282,35 @@ if(NOT TARGET Eigen3::Eigen)
     endif()
 endif()
 
+# SEAL
+set(DUET_BUILD_SEAL FALSE CACHE BOOL "" FORCE)
+if(NOT TARGET SEAL::seal)
+    find_package(SEAL 4.1 QUIET CONFIG)
+    if(SEAL_FOUND)
+        message(STATUS "SEAL: found")
+    else()
+        if(DUET_BUILD_DEPS)
+            message(STATUS "SEAL: download ...")
+            duet_fetch_thirdparty_content(ExternalSEAL)
+            set(DUET_BUILD_SEAL TRUE CACHE BOOL "" FORCE)
+        else()
+            message(FATAL_ERROR "SEAL: not found, please download and install manually")
+        endif()
+    endif()
+    if(TARGET SEAL::seal)
+        set(seal "SEAL::seal")
+    else()
+        set(seal "SEAL::seal_shared")
+    endif()
+endif()
+
+# GMP
+set(DUET_BUILD_GMP FALSE CACHE BOOL "" FORCE)
+if(NOT TARGET gmp)
+    duet_fetch_thirdparty_content(ExternalGMP)
+    set(DUET_BUILD_GMP TRUE CACHE BOOL "" FORCE)
+endif()
+
 ####################
 # DUET C++ library #
 ####################
@@ -317,12 +346,9 @@ if(NOT DUET_BUILD_SHARED_LIBS)
         target_include_directories(duet PUBLIC
             $<BUILD_INTERFACE:$<TARGET_PROPERTY:${network},INTERFACE_INCLUDE_DIRECTORIES>>
             $<INSTALL_INTERFACE:${DUET_INCLUDES_INSTALL_DIR}>)
-        duet_combine_archives(duet ${network})
-        set(DUET_CARRY_NETWORK TRUE)
-    else()
-        target_link_libraries(duet PUBLIC ${network})
-        set(DUET_CARRY_NETWORK FALSE)
     endif()
+    target_link_libraries(duet PUBLIC ${network})
+    set(DUET_CARRY_NETWORK FALSE)
 
     if(DUET_BUILD_SOLO)
         add_dependencies(duet ${solo})
@@ -351,6 +377,31 @@ if(NOT DUET_BUILD_SHARED_LIBS)
     else()
         target_link_libraries(duet PUBLIC Eigen3::Eigen)
         set(DUET_CARRY_EIGEN FALSE)
+    endif()
+
+    if(DUET_BUILD_SEAL)
+        add_dependencies(duet ${seal})
+        target_include_directories(duet PUBLIC
+            $<BUILD_INTERFACE:$<TARGET_PROPERTY:${seal},INTERFACE_INCLUDE_DIRECTORIES>>
+            $<INSTALL_INTERFACE:${DUET_THIRDPARTY_INCLUDES_INSTALL_DIR}>/SEAL-4.1)
+        duet_combine_archives(duet ${seal})
+        set(DUET_CARRY_SEAL TRUE)
+    else()
+        target_link_libraries(duet PUBLIC ${seal})
+        set(DUET_CARRY_SEAL FALSE)
+    endif()
+
+    if(DUET_BUILD_GMP)
+        add_dependencies(duet gmpxx gmp)
+        target_include_directories(duet PUBLIC
+            $<BUILD_INTERFACE:${GMP_INCLUDE_DIR}>
+            $<INSTALL_INTERFACE:${DUET_THIRDPARTY_INCLUDES_INSTALL_DIR}>)
+        duet_combine_archives(duet gmpxx)
+        duet_combine_archives(duet gmp)
+        set(DUET_CARRY_GMP TRUE)
+    else()
+        target_link_libraries(duet PUBLIC gmpxx gmp)
+        set(DUET_CARRY_GMP FALSE)
     endif()
 
     target_link_libraries(duet PUBLIC Threads::Threads)
@@ -413,6 +464,28 @@ else()
         set(DUET_CARRY_EIGEN FALSE)
     endif()
 
+    if(DUET_BUILD_SEAL)
+        add_dependencies(duet_shared ${seal})
+        target_include_directories(duet_shared PUBLIC
+            $<BUILD_INTERFACE:$<TARGET_PROPERTY:${seal},INTERFACE_INCLUDE_DIRECTORIES>>
+            $<INSTALL_INTERFACE:${DUET_THIRDPARTY_INCLUDES_INSTALL_DIR}>/SEAL-4.1)
+        target_link_libraries(duet_shared PUBLIC ${seal})
+        set(DUET_CARRY_SEAL FALSE)
+    else()
+        target_link_libraries(duet_shared PUBLIC ${seal})
+        set(DUET_CARRY_SEAL FALSE)
+    endif()
+
+    if(DUET_BUILD_GMP)
+        add_dependencies(duet_shared gmpxx_shared gmp_shared)
+        target_include_directories(duet_shared PUBLIC
+            $<BUILD_INTERFACE:$<TARGET_PROPERTY:gmp,INTERFACE_INCLUDE_DIRECTORIES>>
+            $<INSTALL_INTERFACE:${DUET_THIRDPARTY_INCLUDES_INSTALL_DIR}>)
+        set(DUET_CARRY_GMP TRUE)
+    else()
+        set(DUET_CARRY_GMP FALSE)
+    endif()
+    target_link_libraries(duet_shared PUBLIC gmpxx_shared gmp_shared)
     target_link_libraries(duet_shared PUBLIC Threads::Threads)
 
     install(TARGETS duet_shared EXPORT PETAce-DuetTargets
@@ -483,6 +556,19 @@ if(DUET_BUILD_DEPS)
             DESTINATION ${DUET_THIRDPARTY_INCLUDES_INSTALL_DIR}
             COMPONENT Devel)
     endif()
+    if(DUET_BUILD_SEAL)
+        install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} --build ${seal_BINARY_DIR} -t install)")
+    endif()
+    if(DUET_BUILD_GMP)
+        if(DUET_BUILD_SHARED_LIBS)
+            install(
+                FILES ${GMP_C_SHARED_LIBRARY} ${GMP_CXX_SHARED_LIBRARY}
+                DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        endif()
+        install(
+            FILES ${GMP_INCLUDE_DIR}/gmp.h ${GMP_INCLUDE_DIR}/gmpxx.h
+            DESTINATION ${DUET_THIRDPARTY_INCLUDES_INSTALL_DIR})
+    endif()
 endif()
 
 ####################
@@ -527,18 +613,4 @@ message(STATUS "DUET_BUILD_BENCH: ${DUET_BUILD_BENCH}")
 
 if(DUET_BUILD_BENCH)
     add_subdirectory(bench)
-endif()
-
-##################
-# DUET python #
-##################
-
-# [OPTION] DUET_BUILD_PYTHON (DEFAULT: OFF)
-# Build a shared library if set to ON.
-set(DUET_BUILD_PYTHON_STR "Build python shared library")
-option(DUET_BUILD_PYTHON ${DUET_BUILD_PYTHON_STR} OFF)
-message(STATUS "DUET_BUILD_PYTHON: ${DUET_BUILD_PYTHON}")
-
-if(DUET_BUILD_PYTHON)
-    add_subdirectory(python)
 endif()

@@ -14,13 +14,13 @@
 
 cmake_minimum_required(VERSION 3.14)
 
-project(DUETTest VERSION 0.2.0 LANGUAGES CXX C)
+project(DUETTest VERSION 0.3.0 LANGUAGES CXX C)
 
 # If not called from root CMakeLists.txt
 if(NOT DEFINED DUET_BUILD_TEST)
     set(DUET_BUILD_TEST ON)
 
-    find_package(PETAce-Duet 0.2.0 EXACT REQUIRED)
+    find_package(PETAce-Duet 0.3.0 EXACT REQUIRED)
 
     add_compile_options(-msse4.2 -Wno-ignored-attributes -mavx)
 
@@ -66,6 +66,7 @@ if(DUET_BUILD_TEST)
     set(DUET_TEST_FILES
         ${CMAKE_CURRENT_LIST_DIR}/duet_test.cpp
         ${CMAKE_CURRENT_LIST_DIR}/ot_test.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/triple_test.cpp
         ${CMAKE_CURRENT_LIST_DIR}/util_test.cpp
         ${CMAKE_CURRENT_LIST_DIR}/shuffle_test.cpp
         ${CMAKE_CURRENT_LIST_DIR}/vm_test.cpp

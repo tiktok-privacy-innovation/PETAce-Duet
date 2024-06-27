@@ -14,13 +14,13 @@
 
 cmake_minimum_required(VERSION 3.14)
 
-project(DUETBench VERSION 0.2.0 LANGUAGES CXX)
+project(DUETBench VERSION 0.3.0 LANGUAGES CXX)
 
 # If not called from root CMakeLists.txt
 if(NOT DEFINED DUET_BUILD_BENCH)
     set(DUET_BUILD_BENCH ON)
 
-    find_package(PETAce-Duet 0.2.0 EXACT REQUIRED)
+    find_package(PETAce-Duet 0.3.0 EXACT REQUIRED)
 
     add_compile_options(-msse4.2 -Wno-ignored-attributes -mavx)
 
@@ -49,22 +49,32 @@ endif()
 
 # if DUET_BUILD_BENCH is ON, use GoogleBenchmark
 if(DUET_BUILD_BENCH)
-    find_package(benchmark QUIET CONFIG)
-    if(benchmark_FOUND)
-        message(STATUS "GoogleBenchmark: found")
+
+    if(DUET_BUILD_DEPS)
+        # tclap
+        message(STATUS "Tclap: download ...")
+        duet_fetch_thirdparty_content(ExternalTclap)
     else()
-        if(DUET_BUILD_DEPS)
-            message(STATUS "GoogleBenchmark: download ...")
-            duet_fetch_thirdparty_content(ExternalBenchmark)
+        message(FATAL_ERROR "Tclap: not found, please download and install manually")
+    endif()
+
+    # glog::glog
+    if(NOT TARGET glog::glog)
+        find_package(glog 0.4.0 QUIET CONFIG)
+        if(glog_FOUND)
+            message(STATUS "glog: found")
         else()
-            message(FATAL_ERROR "GoogleBenchmark: not found, please download and install manually")
+            if(DUET_BUILD_DEPS)
+                message(STATUS "glog: download ...")
+                duet_fetch_thirdparty_content(ExternalGlog)
+            else()
+                message(FATAL_ERROR "glog: not found, please download and install manually")
+            endif()
         endif()
     endif()
 
     # Add source files to bench
-    set(DUET_BENCH_FILES "")
-    # Test files in this directory
-    set(DUET_BENCH_FILES ${DUET_BENCH_FILES}
+    set(DUET_BENCH_FILES
         ${CMAKE_CURRENT_LIST_DIR}/bench.cpp
         ${CMAKE_CURRENT_LIST_DIR}/duet_bench.cpp
     )
@@ -72,10 +82,12 @@ if(DUET_BUILD_BENCH)
     set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl -lrt")
     add_executable(duet_bench ${DUET_BENCH_FILES})
 
+    target_include_directories(duet_bench PRIVATE ${CMAKE_BINARY_DIR}/thirdparty/tclap-src/include)
+
     if(TARGET PETAce-Duet::duet)
-        target_link_libraries(duet_bench PRIVATE PETAce-Duet::duet benchmark::benchmark)
+        target_link_libraries(duet_bench PRIVATE PETAce-Duet::duet glog::glog)
     elseif(TARGET PETAce-Duet::duet_shared)
-        target_link_libraries(duet_bench PRIVATE PETAce-Duet::duet_shared benchmark::benchmark)
+        target_link_libraries(duet_bench PRIVATE PETAce-Duet::duet_shared glog::glog)
     else()
         message(FATAL_ERROR "Cannot find target PETAce::duet or PETAce::duet_shared")
     endif()

@@ -26,6 +26,8 @@ install(
         ${CMAKE_CURRENT_LIST_DIR}/register.h
         ${CMAKE_CURRENT_LIST_DIR}/register_content.h
         ${CMAKE_CURRENT_LIST_DIR}/instruction.h
+        ${CMAKE_CURRENT_LIST_DIR}/duet_vm.h
+        ${CMAKE_CURRENT_LIST_DIR}/operator.h
     DESTINATION
         ${DUET_INCLUDES_INSTALL_DIR}/duet/vm
 )

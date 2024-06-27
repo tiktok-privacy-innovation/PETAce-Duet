@@ -15,7 +15,7 @@
 FetchContent_Declare(
     verse
     GIT_REPOSITORY https://github.com/tiktok-privacy-innovation/PETAce-Verse.git
-    GIT_TAG        f79ede7af704293de32aa44be8c967e1d0eaa3dc # 0.2.0
+    GIT_TAG        34ffb78e122805f5358cb77ae0ce2bb6f6241060 # 0.3.0
 )
 FetchContent_GetProperties(verse)
 
@@ -25,6 +25,7 @@ if(NOT verse_POPULATED)
     set(VERSE_BUILD_SHARED_LIBS ${DUET_BUILD_SHARED_LIBS} CACHE BOOL "" FORCE)
     set(VERSE_BUILD_TEST OFF CACHE BOOL "" FORCE)
     set(VERSE_BUILD_EXAMPLE OFF CACHE BOOL "" FORCE)
+    set(VERSE_BUILD_BENCH OFF CACHE BOOL "" FORCE)
 
     mark_as_advanced(FETCHCONTENT_SOURCE_DIR_VERSE)
     mark_as_advanced(FETCHCONTENT_UPDATES_DISCONNECTED_VERSE)

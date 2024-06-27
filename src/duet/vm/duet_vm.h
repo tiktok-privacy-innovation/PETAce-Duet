@@ -18,7 +18,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "network/net_factory.h"
 #include "network/network.h"
 
 #include "duet/duet.h"
@@ -33,8 +32,7 @@ namespace duet {
 
 class DuetVM {
 public:
-    explicit DuetVM(
-            const petace::network::NetParams& net_params, petace::network::NetScheme net_type, std::size_t party_id);
+    explicit DuetVM(const std::shared_ptr<network::Network>& net, std::size_t party_id);
 
     void registr_op(const Instruction& inst, const std::shared_ptr<OperatorBase>& op);
 
@@ -113,6 +111,10 @@ public:
     bool is_registr_empty();
 
     std::size_t party_id();
+
+    void send_buffer(const std::vector<uint8_t>& input);
+
+    std::vector<uint8_t> recv_buffer(std::size_t buffer_size);
 
 private:
     void registr_default_op();

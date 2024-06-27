@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+#include <chrono>
+#include <iostream>
+#include <random>
+
 #include "gtest/gtest.h"
 #include "print_utils.h"
 

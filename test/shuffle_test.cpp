@@ -21,7 +21,7 @@
 #include "network/net_socket.h"
 #include "network/network.h"
 
-#include "duet/st_generator/st_generator.h"
+#include "duet/share_translation/st_generator.h"
 #include "duet/util/common.h"
 #include "duet/util/secret_shared_shuffle.h"
 
@@ -52,7 +52,7 @@ public:
         auto net = petace::network::NetFactory::get_instance().build(petace::network::NetScheme::SOCKET, net_params);
 
         block seed = read_block_from_dev_urandom();
-        std::shared_ptr<OTGenerator> ot = std::make_shared<OTGenerator>(party_id, seed);
+        std::shared_ptr<ObliviousTransfer> ot = std::make_shared<ObliviousTransfer>(party_id, seed);
         ot->initialize(net);
         STGenerator st(party_id, ot);
         if (party_id == 0) {

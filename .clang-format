@@ -44,6 +44,8 @@ IncludeCategories:
   Priority: 2
 - Regex: '^"duet/.*'
   Priority: 5
+- Regex: '^"duet.*'
+  Priority: 5
 - Regex: '^"solo/.*'
   Priority: 4
 - Regex: '^"verse/.*'

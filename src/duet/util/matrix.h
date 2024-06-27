@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "solo/ahe_paillier.h"
+
 #include "duet/util/defines.h"
 
 namespace petace {
@@ -153,6 +154,7 @@ private:
 };
 
 using PrivateMatrixBool = PrivateMatrix<std::int64_t>;
+using PrivateMatrixInt64 = PrivateMatrix<std::int64_t>;
 
 class BoolMatrix : public MatrixTypeBase<std::int64_t> {
 public:
@@ -238,11 +240,6 @@ public:
         return cipher_;
     }
 
-    void resize(std::size_t x_size, std::size_t y_size) {
-        rows_ = x_size;
-        cols_ = y_size;
-    }
-
     R& operator()(std::size_t index) {
         return cipher_[index];
     }
@@ -259,13 +256,24 @@ public:
         return cipher_[row * cols_ + col];
     }
 
+    void set_ciphers(T& cipher) {
+        cipher_ = cipher;
+    }
+
+    void resize(std::size_t x_size, std::size_t y_size) {
+        rows_ = x_size;
+        cols_ = y_size;
+        cipher_.resize(rows_ * cols_);
+    }
+
 private:
     T cipher_;
     std::size_t rows_;
     std::size_t cols_;
     std::size_t party_;
 };
-using PaillierMatrix = HEMatrix<solo::ahepaillier::Ciphertext, solo::ahepaillier::BigNum>;
+
+using PaillierMatrix = HEMatrix<std::vector<solo::ahepaillier::Ciphertext>, solo::ahepaillier::Ciphertext>;
 
 template <typename T>
 void matrix_block(

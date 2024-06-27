@@ -26,7 +26,7 @@
 #include "network/network.h"
 #include "solo/prng.h"
 
-#include "duet/ot_generator/ot_generator.h"
+#include "duet/oblivious_transfer/oblivious_transfer.h"
 
 class OtTest : public ::testing::Test {
 public:
@@ -49,7 +49,7 @@ public:
         }
 
         srandom(static_cast<std::uint32_t>(time(nullptr)));
-        petace::duet::OTGenerator ot(is_sender, _mm_set_epi64x(random(), random()));
+        petace::duet::ObliviousTransfer ot(is_sender, _mm_set_epi64x(random(), random()));
         ot.initialize(net);
 
         if (is_sender) {
@@ -71,7 +71,7 @@ public:
         }
 
         srandom(static_cast<std::uint32_t>(time(nullptr)));
-        petace::duet::OTGenerator ot(is_sender, _mm_set_epi64x(random(), random()));
+        petace::duet::ObliviousTransfer ot(is_sender, _mm_set_epi64x(random(), random()));
         ot.initialize(net);
 
         if (is_sender) {
@@ -100,7 +100,7 @@ public:
         }
 
         srandom(static_cast<std::uint32_t>(time(nullptr)));
-        petace::duet::OTGenerator ot(is_sender, _mm_set_epi64x(random(), random()));
+        petace::duet::ObliviousTransfer ot(is_sender, _mm_set_epi64x(random(), random()));
         ot.initialize(net);
 
         std::size_t ot_len = 16;
@@ -135,7 +135,7 @@ public:
         }
 
         srandom(static_cast<std::uint32_t>(time(nullptr)));
-        petace::duet::OTGenerator ot(is_sender, _mm_set_epi64x(random(), random()));
+        petace::duet::ObliviousTransfer ot(is_sender, _mm_set_epi64x(random(), random()));
         ot.initialize(net);
 
         std::size_t ot_len = 16;
@@ -167,7 +167,7 @@ public:
         }
 
         srandom(static_cast<std::uint32_t>(time(nullptr)));
-        petace::duet::OTGenerator ot(is_sender, _mm_set_epi64x(random(), random()));
+        petace::duet::ObliviousTransfer ot(is_sender, _mm_set_epi64x(random(), random()));
         ot.initialize(net);
 
         std::size_t ot_len = 16;
@@ -202,7 +202,7 @@ public:
         }
 
         srandom(static_cast<std::uint32_t>(time(nullptr)));
-        petace::duet::OTGenerator ot(is_sender, _mm_set_epi64x(random(), random()));
+        petace::duet::ObliviousTransfer ot(is_sender, _mm_set_epi64x(random(), random()));
         ot.initialize(net);
 
         std::size_t ot_len = 32;

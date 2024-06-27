@@ -61,20 +61,13 @@ void send_cipher(
     std::size_t party = in.party();
     std::size_t row = in.rows();
     std::size_t col = in.cols();
-    petace::solo::ahepaillier::Serialization serialization(paillier_key_size);
-    std::size_t cipher_size = (paillier_key_size * 2 + 7) / 8;
     net->send_data(&row, sizeof(std::size_t));
     net->send_data(&col, sizeof(std::size_t));
     net->send_data(&party, sizeof(std::size_t));
 
-    ByteVector send_buffer;
-    ByteVector temp;
-    send_buffer.reserve(row * col * cipher_size);
+    ByteVector send_buffer(row * col * kPaillierCipherSize);
     for (std::size_t i = 0; i < in.size(); i++) {
-        temp.resize(cipher_size);
-        serialization.bn_to_bytes(in.ciphers().getElement(i), temp.data(), cipher_size);
-        send_buffer.insert(
-                send_buffer.end(), std::make_move_iterator(temp.begin()), std::make_move_iterator(temp.end()));
+        in(i).serialize_to_bytes(send_buffer.data() + i * kPaillierCipherSize, kPaillierCipherSize);
     }
     data_size = send_buffer.size();
     net->send_data(&data_size, sizeof(std::size_t));
@@ -90,8 +83,6 @@ void recv_cipher(const std::shared_ptr<network::Network>& net, const std::shared
     std::size_t col;
     std::size_t data_size;
     petace::solo::ahepaillier::Encoder encoder;
-    petace::solo::ahepaillier::Serialization serialization(paillier_key_size);
-    std::size_t cipher_size = (paillier_key_size * 2 + 7) / 8;
     net->recv_data(&row, sizeof(std::size_t));
     net->recv_data(&col, sizeof(std::size_t));
     net->recv_data(&party, sizeof(std::size_t));
@@ -100,20 +91,13 @@ void recv_cipher(const std::shared_ptr<network::Network>& net, const std::shared
     out.set_party(party);
 
     ByteVector receive_buffer;
-    std::vector<solo::ahepaillier::BigNum> bn_vec;
     net->recv_data(&data_size, sizeof(std::size_t));
     receive_buffer.resize(data_size);
-    bn_vec.resize(row * col);
     net->recv_data(receive_buffer.data(), data_size * sizeof(solo::Byte));
-    ByteVector temp;
-    for (std::size_t i = 0; i < row * col; i++) {
-        ByteVector::const_iterator first = receive_buffer.begin() + i * cipher_size;
-        ByteVector::const_iterator last = receive_buffer.begin() + (i + 1) * cipher_size;
-        temp.assign(first, last);
-        serialization.bn_from_bytes(temp.data(), cipher_size, bn_vec[i]);
-    }
 
-    out.ciphers() = solo::ahepaillier::Ciphertext(*pk, bn_vec);
+    for (std::size_t i = 0; i < row * col; i++) {
+        out(i).deserialize_from_bytes(pk, receive_buffer.data() + i * kPaillierCipherSize, kPaillierCipherSize);
+    }
 }
 
 }  // namespace duet

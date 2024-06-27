@@ -41,6 +41,8 @@ set(DUET_CARRY_NETWORK @DUET_CARRY_NETWORK@)
 set(DUET_CARRY_SOLO @DUET_CARRY_SOLO@)
 set(DUET_CARRY_VERSE @DUET_CARRY_VERSE@)
 set(DUET_CARRY_EIGEN @DUET_CARRY_EIGEN@)
+set(DUET_CARRY_SEAL @DUET_CARRY_SEAL@)
+set(DUET_CARRY_GMP @DUET_CARRY_GMP@)
 
 if(NOT DUET_CARRY_NETWORK)
     duet_find_dependency(PETAce-Network REQUIRED)
@@ -56,6 +58,14 @@ endif()
 
 if(NOT DUET_CARRY_EIGEN)
     duet_find_dependency(Eigen3 REQUIRED)
+endif()
+
+if(NOT DUET_CARRY_SEAL)
+    duet_find_dependency(SEAL REQUIRED)
+endif()
+
+if(NOT DUET_CARRY_GMP)
+    duet_find_dependency(gmp REQUIRED)
 endif()
 
 # Add the current directory to the module search path

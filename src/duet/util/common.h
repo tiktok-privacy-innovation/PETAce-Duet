@@ -16,12 +16,16 @@
 
 #include <cmath>
 
-#include "solo/prng.h"
+#include <algorithm>
+
+#include "gmp.h"
+#include "gmpxx.h"
 
 #include "solo/ahe_paillier.h"
+#include "solo/prng.h"
 
 #include "duet/util/consts.h"
-
+#include "duet/util/prng.h"
 namespace petace {
 namespace duet {
 
@@ -43,18 +47,34 @@ inline std::size_t ceil_log2(std::size_t in) {
     return static_cast<std::size_t>(std::ceil(std::log2(in)));
 }
 
-inline std::int64_t ipcl_bn_to_int64(const solo::ahepaillier::BigNum& in) {
-    std::size_t length = in.DwordSize();
-    if (length == 0) {
-        return 0;
+inline mpz_class get_random_mpz(std::shared_ptr<PRNG> prng, std::size_t bits) {
+    mpz_class out = 0;
+    std::size_t byte_count = (bits + 7 / 8);
+    std::vector<solo::Byte> in(byte_count);
+    do {
+        prng->get_unique_rand_gen()->generate(byte_count, in.data());
+        mpz_import(out.get_mpz_t(), in.size(), 1, 1, 0, 0, in.data());
+        out >>= (byte_count * 8 - bits);
+    } while (out == 0 || mpz_sizeinbase(out.get_mpz_t(), 2) != bits);
+    return out;
+}
+
+inline void mpz_bn_from_bytes(const petace::solo::Byte* in, std::size_t in_byte_count, mpz_class& out) {
+    if (in == nullptr) {
+        throw std::invalid_argument("in is nullptr");
     }
-    std::vector<std::uint32_t> data;
-    in.num2vec(data);
-    std::uint64_t value = data[0];
-    if (length > 1) {
-        value += static_cast<std::uint64_t>(data[1]) << 32;
+    mpz_import(out.get_mpz_t(), in_byte_count, -1, sizeof(petace::solo::Byte), -1, 0, in);
+}
+
+inline void mpz_bn_to_bytes(const mpz_class& in, petace::solo::Byte* out, std::size_t out_byte_count) {
+    if (out == nullptr) {
+        throw std::invalid_argument("out is nullptr");
     }
-    return static_cast<std::int64_t>(value);
+    std::size_t length = (mpz_sizeinbase(in.get_mpz_t(), 2) + 7) / 8;
+    mpz_export(out, nullptr, -1, sizeof(petace::solo::Byte), -1, 0, in.get_mpz_t());
+    if (length < out_byte_count) {
+        std::fill_n(out + length, out_byte_count - length, petace::solo::Byte('\x00'));
+    }
 }
 
 }  // namespace duet

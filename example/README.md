@@ -83,7 +83,7 @@ petace::duet::ArithMatrix A_minus_B(num_rows, num_cols);
 duet->sub(share_W_Alice, share_W_Bob, A_minus_B);
 duet->less_than_zero(net, A_minus_B, boolen_ret);
 // reveal result to Alice
-duet->reveal_bool(net, 0, boolen_ret, ret);
+duet->reveal(net, 0, boolen_ret, ret);
 // print the result on Alice side
 if (duet->party() == 0) {
     std::cout << "reveal to party 0, ret is: " << std::endl;

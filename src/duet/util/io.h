@@ -20,6 +20,7 @@
 
 #include "network/network.h"
 
+#include "duet/util/common.h"
 #include "duet/util/consts.h"
 #include "duet/util/defines.h"
 #include "duet/util/matrix.h"

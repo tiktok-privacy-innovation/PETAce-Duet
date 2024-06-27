@@ -30,7 +30,6 @@ void DoublePrg::gen(const PRGSeed& in, PRGSeed& first, PRGSeed& second) {
     block two = in;
     one[1] ^= 1;
     two[1] ^= 2;
-    // TODO(@yindong):  change hash to aes.
 
     DoublePrg::fixed_hash->compute(
             reinterpret_cast<solo::Byte*>(&one), sizeof(block), reinterpret_cast<solo::Byte*>(&first), sizeof(block));

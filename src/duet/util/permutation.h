@@ -142,5 +142,55 @@ private:
     std::vector<std::size_t> data_{};
 };
 
+/**
+ * @brief PrivatePermutation and related operations, the permutation belongs to one party privately.
+ *
+ * The main operations are permute a vector like data, permute a permutation and
+ * get the inverse of a permutaion.
+ */
+class PrivatePermutation : public Permutation {
+public:
+    PrivatePermutation() = delete;
+
+    ~PrivatePermutation() = default;
+
+    PrivatePermutation(PrivatePermutation&&) = default;
+
+    PrivatePermutation& operator=(PrivatePermutation&&) = default;
+
+    explicit PrivatePermutation(const std::vector<std::size_t>& data) : Permutation(data) {
+    }
+
+    explicit PrivatePermutation(std::size_t size) : Permutation(size) {
+    }
+
+    PrivatePermutation(const std::vector<std::size_t>& data, std::size_t party_id)
+            : Permutation(data), party_id_(party_id) {
+    }
+
+    PrivatePermutation(std::size_t size, std::size_t party_id) : Permutation(size), party_id_(party_id) {
+    }
+
+    /**
+     * @brief Set the party id of the permutaion.
+     *
+     * @param[in] party_id The party id of the permutaion.
+     */
+    void set_party_id(std::size_t party_id) {
+        party_id_ = party_id;
+    }
+
+    /**
+     * @brief Get the party id of the permutaion.
+     *
+     * @return The party id of the permutaion.
+     */
+    std::size_t party_id() const {
+        return party_id_;
+    }
+
+private:
+    std::size_t party_id_ = 0;
+};
 }  // namespace duet
 }  // namespace petace
